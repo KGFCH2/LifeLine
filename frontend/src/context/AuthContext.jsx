@@ -93,11 +93,38 @@ export function AuthProvider({ children }) {
     })
   }, [])
 
+  const verifyGoogleToken = useCallback(async (idToken, provider = 'google') => {
+    try {
+      const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000'
+      console.log(`🔐 [Auth] Verifying ${provider} token with backend...`)
+      
+      const response = await fetch(`${backendUrl}/api/auth/google`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ idToken, provider })
+      });
+
+      if (!response.ok) {
+        throw new Error(`Authentication failed with status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      if (data.success && data.user) {
+        return login(data.user);
+      } else {
+        throw new Error('Authentication failed: Invalid response from server');
+      }
+    } catch (error) {
+      console.error('❌ [Auth Context] Token verification error:', error);
+      throw error;
+    }
+  }, [login]);
+
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout, updateProfile, initAuth }}>
+    <AuthContext.Provider value={{ user, loading, login, logout, updateProfile, initAuth, verifyGoogleToken }}>
       {children}
     </AuthContext.Provider>
-  )
+  );
 }
 
 export const useAuth = () => {
