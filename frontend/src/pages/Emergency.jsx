@@ -109,6 +109,37 @@ export default function Emergency() {
   }, [user]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // ─────────────────────────────────────────────────────────────────────────
+  // Force a fresh GPS fix and restart hospital fetch
+  // ─────────────────────────────────────────────────────────────────────────
+  const refreshLocation = () => {
+    setLoading(true)
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const coords = { lat: pos.coords.latitude, lng: pos.coords.longitude }
+        setUserLocation(coords)
+        setLocationAccuracy(Math.round(pos.coords.accuracy))
+        setLocationError(null)
+        stableGpsRef.current = coords
+        hospitalFetchedRef.current = false
+        setNearestHospital(null)
+        setDestination(null)
+        setRoutes([])
+        setActiveRoute(null)
+        fetchNearestHospital(coords)
+      },
+      () => {
+        const FALLBACK = { lat: 22.5726, lng: 88.3639 }
+        stableGpsRef.current = FALLBACK
+        setUserLocation(FALLBACK)
+        setLocationError('Location access denied. Using default (Kolkata).')
+        hospitalFetchedRef.current = false
+        fetchNearestHospital(FALLBACK)
+      },
+      { enableHighAccuracy: true, timeout: 12000, maximumAge: 0 }
+    )
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────
   // Fetch nearest hospital — called ONCE with the stable GPS coords
   // ─────────────────────────────────────────────────────────────────────────
   const fetchNearestHospital = async (coords) => {
@@ -361,25 +392,30 @@ export default function Emergency() {
     <div className="min-h-screen bg-gray-50" style={{ fontFamily: "'Inter', sans-serif" }}>
 
       {/* ── Header ─────────────────────────────────────────────────────── */}
-      <div className="bg-[#C8102E] text-white px-4 py-4 flex items-center gap-3 shadow-md">
-        <button onClick={() => navigate('/')} className="w-9 h-9 bg-white/15 hover:bg-white/25 rounded-xl flex items-center justify-center transition-all active:scale-90">
+      <div className="bg-white border-b border-gray-100 flex items-center gap-3 px-4 py-3.5 sticky top-0 z-10 shadow-sm">
+        <button onClick={() => navigate('/')} className="w-9 h-9 bg-gray-50 hover:bg-gray-100 text-gray-600 rounded-xl flex items-center justify-center transition-all active:scale-95 shrink-0">
           <ChevronLeft size={20} />
         </button>
-        <div className="flex-1">
-          <h1 className="font-bold text-lg flex items-center gap-2">
-            <Siren size={20} />
-            Emergency Mode
-          </h1>
-          <p className="text-red-100 text-xs">
-            {phase === 'tracking' ? '● Live Tracking Active' : phase === 'civilian_active' ? '● Civilian Mode Active' : 'Request Emergency Assistance'}
+        <div className="flex-1 min-w-0">
+          <p className="text-[10px] font-bold text-[#C8102E] tracking-widest uppercase mb-0.5 truncate" style={{ fontFamily: "'JetBrains Mono', monospace" }}>
+             {phase === 'tracking' ? 'Live Tracking' : phase === 'civilian_active' ? 'Civilian Mode' : 'Emergency Assistance'}
           </p>
+          <h1 className="font-bold text-lg text-gray-900 flex items-center gap-1.5 leading-none truncate">
+            <Siren size={18} className="text-[#C8102E] shrink-0" />
+            LifeLine+ SOS
+          </h1>
         </div>
-        {locationAccuracy && (
-          <div className="text-right">
-            <p className="text-[10px] text-red-200">GPS Accuracy</p>
-            <p className="text-xs font-mono text-white">±{locationAccuracy}m</p>
-          </div>
-        )}
+        <div className="flex items-center gap-2.5 shrink-0">
+           {locationAccuracy && (
+            <div className="text-right border-r border-gray-100 pr-2.5 hidden sm:block">
+              <p className="text-[9px] font-semibold text-gray-400 uppercase tracking-widest" style={{ fontFamily: "'JetBrains Mono', monospace" }}>Accuracy</p>
+              <p className="text-xs font-bold text-gray-900">±{locationAccuracy}m</p>
+            </div>
+          )}
+          <button onClick={refreshLocation} title="Refresh GPS" className="w-9 h-9 bg-red-50 hover:bg-red-100 text-[#C8102E] rounded-xl flex items-center justify-center transition-all active:scale-95">
+             <Navigation size={16} />
+          </button>
+        </div>
       </div>
 
       {/* ── Location error banner ───────────────────────────────────────── */}
@@ -404,6 +440,7 @@ export default function Emergency() {
             show3D={show3D}
             onToggle3D={() => setShow3D(v => !v)}
             onMapClick={(phase === 'init') ? (loc) => { setDestination(loc); setNearestHospital(null); setPhase('route_calc') } : undefined}
+            onRefreshLocation={refreshLocation}
             zoom={15}
             demoMode={demoMode}
             demoPath={demoPath}
@@ -551,6 +588,23 @@ export default function Emergency() {
       {/* ── Phase: Ambulance List ─────────────────────────────────────── */}
       {phase === 'ambulance_list' && (
         <div className="px-4 mt-5">
+          {/* Highlight destination hospital */}
+          {nearestHospital && (
+            <div className="bg-red-50 border border-red-100 rounded-2xl p-3.5 mb-4 flex items-start gap-3 shadow-sm">
+              <div className="w-10 h-10 bg-[#C8102E] rounded-xl flex items-center justify-center shrink-0">
+                <Building2 size={18} className="text-white" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-[10px] font-bold text-[#C8102E] tracking-widest uppercase mb-0.5" style={{ fontFamily: "'JetBrains Mono', monospace" }}>Destination Hospital</p>
+                <p className="text-sm font-bold text-gray-900 leading-tight">{nearestHospital.name}</p>
+                <div className="flex items-center gap-2 mt-1">
+                   <Clock size={11} className="text-[#C8102E]" />
+                   <span className="text-[11px] font-semibold text-gray-700">{activeRoute ? activeRoute.duration : nearestHospital.distance} to arrival</span>
+                </div>
+              </div>
+            </div>
+          )}
+
           <h2 className="font-bold text-gray-900 mb-3 flex items-center gap-2 text-base">
             <Ambulance size={18} className="text-[#C8102E]" /> Nearby Ambulances
           </h2>

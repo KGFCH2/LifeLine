@@ -101,10 +101,11 @@ export default function MapView({
   demoAmbulancePos = null,
   demoProgress = 0,
   userAvatar = null,
+  onRefreshLocation,
 }) {
   const containerRef = useRef(null)
-  const mapRef = useRef(null)           // google.maps.Map instance
-  const initializedRef = useRef(false)  // guard — init happens exactly once
+  const mapRef = useRef(null)         
+  const initializedRef = useRef(false)  
   const markersRef = useRef([])
   const userMarkerRef = useRef(null)
   const routeLinesRef = useRef([])
@@ -378,6 +379,7 @@ export default function MapView({
 
   // ── Recenter ─────────────────────────────────────────────────────────────
   const handleRecenter = () => {
+    if (onRefreshLocation) onRefreshLocation()
     if (mapRef.current && userLocation) {
       mapRef.current.panTo(userLocation)
       mapRef.current.setZoom(16)
