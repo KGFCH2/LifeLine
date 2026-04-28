@@ -50,56 +50,31 @@ export default function Home() {
     const baseLat = location?.lat || 22.5726
     const baseLng = location?.lng || 88.3639
     
+    // Generate 10 Hospitals, 5 Police, 10 Doctors, 10 Pharmacies relative to location
+    const generateDemo = (type, count, prefix) => {
+      return Array.from({ length: count }).map((_, i) => ({
+        id: `${type}-${i}`,
+        name: `${prefix} ${['General', 'Emergency', 'Central', 'Metro', 'Unity', 'Lifeline', 'Global', 'City'][i % 8] || 'Super'} ${type === 'doctor' ? 'Clinic' : type === 'police' ? 'Station' : type === 'pharmacy' ? 'Meds' : 'Hospital'}`,
+        address: `Street ${i + 1}, Near current location`,
+        rating: (4 + Math.random()).toFixed(1),
+        distance: 0.5 + (i * 0.4),
+        openNow: true,
+        phone: type === 'police' ? '100' : `+91 99900 0000${i}`,
+        location: {
+          lat: baseLat + (Math.random() - 0.5) * 0.02,
+          lng: baseLng + (Math.random() - 0.5) * 0.02
+        }
+      }))
+    }
+
     const demoData = {
-      hospital: [
-        { id: 'h1', name: 'Apollo Gleneagles Hospital', address: '58, Canal Circular Road, Kolkata', rating: 4.8, distance: 0.8, openNow: true, phone: '+91 33 2320 3040' },
-        { id: 'h2', name: 'Fortis Hospital Anandapur', address: '730, Anandapur, EM Bypass, Kolkata', rating: 4.6, distance: 1.2, openNow: true, phone: '+91 33 6628 4444' },
-        { id: 'h3', name: 'AMRI Hospital Salt Lake', address: 'JC-16 & 17, Salt Lake City, Kolkata', rating: 4.5, distance: 1.5, openNow: true, phone: '+91 33 6627 0100' },
-        { id: 'h4', name: 'Peerless Hospital', address: '360, Panchasayar, Kolkata', rating: 4.3, distance: 2.1, openNow: true, phone: '+91 33 2423 0405' },
-        { id: 'h5', name: 'Desun Hospital', address: 'Nayantara Supermarket, EM Bypass, Kolkata', rating: 4.4, distance: 2.4, openNow: true, phone: '+91 33 7122 1222' },
-        { id: 'h6', name: 'Ruby General Hospital', address: 'Kasba Golpark, EM Bypass, Kolkata', rating: 4.2, distance: 2.8, openNow: true, phone: '+91 33 2466 5050' },
-        { id: 'h7', name: 'Belle Vue Clinic', address: '9 Loudon Street, Kolkata', rating: 4.7, distance: 3.2, openNow: true, phone: '+91 33 3067 7000' },
-        { id: 'h8', name: 'Sankara Nethralaya', address: 'NSC Bose Road, Kolkata', rating: 4.5, distance: 3.5, openNow: true, phone: '+91 33 2280 7777' },
-      ],
-      police: [
-        { id: 'p1', name: 'Bidhannagar South PS', address: 'Sector 5, Salt Lake, Kolkata', rating: 4.2, distance: 0.9, openNow: true, phone: '100' },
-        { id: 'p2', name: 'Phoolbagan Police Station', address: 'Phoolbagan, EM Bypass, Kolkata', rating: 4.0, distance: 1.3, openNow: true, phone: '100' },
-        { id: 'p3', name: 'Salt Lake PS', address: 'Karunamoyee, Salt Lake, Kolkata', rating: 4.3, distance: 1.6, openNow: true, phone: '100' },
-        { id: 'p4', name: 'Ultadanga Police Station', address: 'Ultadanga, Kolkata', rating: 3.9, distance: 2.0, openNow: true, phone: '100' },
-        { id: 'p5', name: 'Kolkata Police HQ', address: '18, Lal Bazar, Kolkata', rating: 4.5, distance: 3.5, openNow: true, phone: '100' },
-        { id: 'p6', name: 'Park Street PS', address: 'Park Street, Kolkata', rating: 4.1, distance: 3.8, openNow: true, phone: '100' },
-        { id: 'p7', name: 'Topsia Police Station', address: 'Topsia, Kolkata', rating: 4.0, distance: 2.5, openNow: true, phone: '100' },
-        { id: 'p8', name: 'Beliaghata PS', address: 'Beliaghata, Kolkata', rating: 3.8, distance: 2.2, openNow: true, phone: '100' },
-      ],
-      doctor: [
-        { id: 'd1', name: 'Dr. Arunabha Sengupta', specialty: 'Cardiologist', address: 'Apollo Clinic, Salt Lake', rating: 4.9, distance: 1.0, openNow: true, phone: '+91 98765 43210' },
-        { id: 'd2', name: 'Dr. Priya Sharma', specialty: 'Pediatrician', address: 'AMRI Hospital, Salt Lake', rating: 4.7, distance: 1.4, openNow: true, phone: '+91 98765 43211' },
-        { id: 'd3', name: 'Dr. Rajesh Banerjee', specialty: 'Orthopedic', address: 'Fortis Hospital, Anandapur', rating: 4.6, distance: 1.8, openNow: true, phone: '+91 98765 43212' },
-        { id: 'd4', name: 'Dr. Smita Das', specialty: 'Emergency Medicine', address: 'Desun Hospital, EM Bypass', rating: 4.8, distance: 2.0, openNow: true, phone: '+91 98765 43213' },
-        { id: 'd5', name: 'Dr. Anirban Chatterjee', specialty: 'Neurologist', address: 'Ruby Hospital, Kasba', rating: 4.7, distance: 2.3, openNow: true, phone: '+91 98765 43214' },
-        { id: 'd6', name: 'Dr. Ritu Gupta', specialty: 'Gynecologist', address: 'Belle Vue Clinic, Loudon St', rating: 4.8, distance: 2.7, openNow: true, phone: '+91 98765 43215' },
-        { id: 'd7', name: 'Dr. Amit Sen', specialty: 'Dentist', address: 'City Center, Salt Lake', rating: 4.5, distance: 1.2, openNow: true, phone: '+91 98765 43216' },
-        { id: 'd8', name: 'Dr. Mousumi Roy', specialty: 'ENT Specialist', address: 'Apollo Gleneagles, Canal Rd', rating: 4.6, distance: 1.5, openNow: true, phone: '+91 98765 43217' },
-      ],
-      pharmacy: [
-        { id: 'ph1', name: 'Apollo Pharmacy', address: 'Salt Lake Sector 5, Kolkata', rating: 4.5, distance: 0.5, openNow: true, phone: '+91 33 2358 0098' },
-        { id: 'ph2', name: 'Frank Ross Pharmacy', address: 'Salt Lake City Centre, Kolkata', rating: 4.3, distance: 0.9, openNow: true, phone: '+91 33 2321 4567' },
-        { id: 'ph3', name: 'MedPlus Pharmacy', address: 'EM Bypass, Near Metro', rating: 4.4, distance: 1.3, openNow: true, phone: '+91 33 2465 7890' },
-        { id: 'ph4', name: 'Wellness Forever', address: 'Sector 3, Salt Lake, Kolkata', rating: 4.2, distance: 1.5, openNow: true, phone: '+91 33 2345 6789' },
-        { id: 'ph5', name: 'Dawai Ghar', address: 'College More, Salt Lake', rating: 4.1, distance: 0.7, openNow: true, phone: '+91 33 2334 5678' },
-        { id: 'ph6', name: 'Guardian Pharmacy', address: 'Sector 2, Salt Lake', rating: 4.0, distance: 1.1, openNow: true, phone: '+91 33 2322 3456' },
-        { id: 'ph7', name: '98.4 Pharmacy', address: 'Rajarhat, Kolkata', rating: 4.3, distance: 2.0, openNow: true, phone: '+91 33 2323 4567' },
-        { id: 'ph8', name: 'Sanjivani Pharmacy', address: 'Baguiati, Kolkata', rating: 4.2, distance: 2.4, openNow: true, phone: '+91 33 2324 5678' },
-      ]
+      hospital: generateDemo('hospital', 10, 'Nearby'),
+      police: generateDemo('police', 5, 'Local'),
+      doctor: generateDemo('doctor', 10, 'Dr.'),
+      pharmacy: generateDemo('pharmacy', 10, 'Quick')
     }
     
-    return demoData[serviceType]?.map((service, index) => ({
-      ...service,
-      location: {
-        lat: baseLat + (Math.random() - 0.5) * 0.015,
-        lng: baseLng + (Math.random() - 0.5) * 0.015
-      }
-    })) || []
+    return demoData[serviceType] || []
   }, [location, serviceType])
 
   const fetchServices = useCallback(async () => {

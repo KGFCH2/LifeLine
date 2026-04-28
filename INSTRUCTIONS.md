@@ -229,6 +229,29 @@ cd backend
 # Start command: node server.js
 ```
 
+### ☁️ Google Cloud Run (Manual Deploy)
+
+#### Step 1: Deploy Backend
+```bash
+gcloud run deploy lifeline-backend \
+  --source ./backend \
+  --region us-central1 \
+  --allow-unauthenticated \
+  --set-env-vars="GOOGLE_MAPS_API_KEY=YOUR_KEY,GEMINI_API_KEY=YOUR_KEY,FIREBASE_PROJECT_ID=YOUR_ID,FIREBASE_CLIENT_EMAIL=YOUR_EMAIL,FIREBASE_PRIVATE_KEY=\"YOUR_PRIVATE_KEY\""
+```
+
+#### Step 2: Deploy Frontend
+```bash
+cd frontend
+# Ensure .env has VITE_BACKEND_URL set to your backend URL
+gcloud run deploy lifeline-frontend \
+  --source . \
+  --region us-central1 \
+  --allow-unauthenticated
+```
+
+---
+
 ---
 
 ## 🧯 Troubleshooting
