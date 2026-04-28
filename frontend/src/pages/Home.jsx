@@ -52,9 +52,15 @@ export default function Home() {
     
     // Generate 10 Hospitals, 5 Police, 10 Doctors, 10 Pharmacies relative to location
     const generateDemo = (type, count, prefix) => {
+      const typeLabels = {
+        hospital: 'Hospital',
+        police: 'Police Station',
+        doctor: 'Clinic',
+        pharmacy: 'Pharmacy'
+      }
       return Array.from({ length: count }).map((_, i) => ({
         id: `${type}-${i}`,
-        name: `${prefix} ${['General', 'Emergency', 'Central', 'Metro', 'Unity', 'Lifeline', 'Global', 'City'][i % 8] || 'Super'} ${type === 'doctor' ? 'Clinic' : type === 'police' ? 'Station' : type === 'pharmacy' ? 'Meds' : 'Hospital'}`,
+        name: `${prefix} ${['General', 'Emergency', 'Central', 'Metro', 'Unity', 'Lifeline', 'Global', 'City'][i % 8] || 'Super'} ${typeLabels[type]}`,
         address: `Street ${i + 1}, Near current location`,
         rating: (4 + Math.random()).toFixed(1),
         distance: 0.5 + (i * 0.4),
