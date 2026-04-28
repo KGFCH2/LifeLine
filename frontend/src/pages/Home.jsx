@@ -1,13 +1,13 @@
 import { useState, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext.jsx'
+import { useGeolocation } from '../hooks/useGeolocation.js'
 import LoginModal from '../components/LoginModal.jsx'
-import { DotLottieReact } from '@lottiefiles/dotlottie-react'
 import {
   Ambulance, Shield, Stethoscope, MapPin, Clock,
   Phone, Mail, Send, CheckCircle, ChevronRight, Zap,
   Navigation, Brain, Heart, ArrowRight, Star, Activity,
-  Calendar, Check
+  Calendar, Check, Crosshair, RefreshCw
 } from 'lucide-react'
 
 const topDoctors = [
@@ -60,6 +60,7 @@ const topDoctors = [
 export default function Home() {
   const { user } = useAuth()
   const navigate = useNavigate()
+  const { location: geoLocation, loading: geoLoading, accuracy, accuracyColor, refreshLocation } = useGeolocation()
   const [showLogin, setShowLogin] = useState(false)
   const [form, setForm] = useState({ name: '', email: '', message: '' })
   const [sent, setSent] = useState(false)
@@ -166,16 +167,35 @@ export default function Home() {
                 </div>
               ))}
             </div>
+
+            {/* Location indicator with accuracy */}
+            <div className="flex items-center gap-2 mt-4 bg-gray-50 rounded-lg px-3 py-2 w-full">
+              <Crosshair size={14} className={`${geoLoading ? 'animate-spin' : ''} ${accuracyColor}`} />
+              <span className="text-xs text-gray-500 flex-1 truncate">
+                {geoLoading ? 'Getting accurate location...' : geoLocation ? `${geoLocation.lat.toFixed(6)}, ${geoLocation.lng.toFixed(6)}` : 'Detecting location...'}
+              </span>
+              {!geoLoading && accuracy && (
+                <span className={`text-[10px] px-2 py-0.5 rounded-full bg-white ${accuracyColor}`}>
+                  ±{Math.round(accuracy)}m
+                </span>
+              )}
+              <button 
+                onClick={refreshLocation}
+                className="p-1 hover:bg-gray-200 rounded transition-colors"
+                title="Refresh location"
+              >
+                <RefreshCw size={12} className="text-gray-400" />
+              </button>
+            </div>
           </div>
 
-          {/* Right — Lottie animation */}
+          {/* Right — Hero GIF */}
           <div className="order-1 lg:order-2 flex items-center justify-center">
             <div className="relative w-full max-w-md lg:max-w-xl">
-              <DotLottieReact
-                src="https://lottie.host/93fb06f3-844c-4188-9ebf-b76b9109f6b9/OEIzvHCqFr.lottie"
-                loop
-                autoplay
-                style={{ width: '100%', height: 'auto' }}
+              <img
+                src="/LifeLine_SVG.gif"
+                alt="LifeLine+ Emergency Response"
+                className="w-full h-auto rounded-2xl shadow-lg"
               />
             </div>
           </div>
