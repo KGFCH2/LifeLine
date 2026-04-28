@@ -23,6 +23,7 @@ export default function Home() {
   const [mapCenter, setMapCenter] = useState(null)
   const [routes, setRoutes] = useState([])
   const [activeRoute, setActiveRoute] = useState(null)
+  const [serviceCounts, setServiceCounts] = useState({ hospital: 10, police: 5, doctor: 12, pharmacy: 15 })
 
   useEffect(() => {
     const saved = localStorage.getItem('lifeline_dark') === 'true'
@@ -115,11 +116,16 @@ export default function Home() {
       
       if (data.results && data.results.length > 0) {
         setServices(data.results.map(s => ({ ...s, type })))
+        setServiceCounts(prev => ({ ...prev, [type]: data.results.length }))
       } else {
-        setServices(demoServices(type))
+        const demo = demoServices(type)
+        setServices(demo)
+        setServiceCounts(prev => ({ ...prev, [type]: demo.length }))
       }
     } catch (err) {
-      setServices(demoServices(type))
+      const demo = demoServices(type)
+      setServices(demo)
+      setServiceCounts(prev => ({ ...prev, [type]: demo.length }))
     } finally {
       setLoading(false)
     }
@@ -235,7 +241,7 @@ export default function Home() {
               </svg>
             </div>
             <span className="text-sm font-semibold">Hospitals</span>
-            <span className="block text-[10px] opacity-80 mt-0.5">{serviceType === 'hospital' ? (services.length || 10) : 10} nearby</span>
+            <span className="block text-[10px] opacity-80 mt-0.5">{serviceCounts.hospital} nearby</span>
           </button>
 
           <button
@@ -264,7 +270,7 @@ export default function Home() {
               </svg>
             </div>
             <span className="text-sm font-semibold">Police</span>
-            <span className="block text-[10px] opacity-80 mt-0.5">{serviceType === 'police' ? (services.length || 5) : 5} nearby</span>
+            <span className="block text-[10px] opacity-80 mt-0.5">{serviceCounts.police} nearby</span>
           </button>
 
           <button
@@ -293,7 +299,7 @@ export default function Home() {
               </svg>
             </div>
             <span className="text-sm font-semibold">Doctors</span>
-            <span className="block text-[10px] opacity-80 mt-0.5">{serviceType === 'doctor' ? (services.length || 12) : 12} nearby</span>
+            <span className="block text-[10px] opacity-80 mt-0.5">{serviceCounts.doctor} nearby</span>
           </button>
 
           <button
@@ -324,7 +330,7 @@ export default function Home() {
               </svg>
             </div>
             <span className="text-sm font-semibold">Pharmacy</span>
-            <span className="block text-[10px] opacity-80 mt-0.5">{serviceType === 'pharmacy' ? (services.length || 15) : 15} nearby</span>
+            <span className="block text-[10px] opacity-80 mt-0.5">{serviceCounts.pharmacy} nearby</span>
           </button>
         </div>
         
