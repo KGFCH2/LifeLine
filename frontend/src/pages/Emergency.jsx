@@ -50,6 +50,7 @@ export default function Emergency() {
   const [selectedAmbulance, setSelectedAmbulance] = useState(null)
   const [showArrivalNotification, setShowArrivalNotification] = useState(false)
   const [userAvatar, setUserAvatar] = useState(null)
+  const [selectedHospitalIdx, setSelectedHospitalIdx] = useState(0)
 
   const demoIntervalRef = useRef(null)
   const watchIdRef = useRef(null)
@@ -154,7 +155,7 @@ export default function Emergency() {
         lat: String(coords.lat),
         lng: String(coords.lng),
         type: 'hospital',
-        radius: '8000',
+        radius: '14000',
       })
       const res = await fetch(`${BACKEND_URL}/api/nearest-services?${params}`)
       const data = await res.json()
@@ -167,7 +168,7 @@ export default function Emergency() {
         return
       }
 
-      const topHospitals = results.slice(0, 4)
+      const topHospitals = results.slice(0, 6)
       const topHospitalsWithDetails = await Promise.all(
         topHospitals.map(async (h) => {
           try {
@@ -209,7 +210,29 @@ export default function Emergency() {
   }
 
   // ─────────────────────────────────────────────────────────────────────────
-  // Manual refetch (user taps "Retry")
+  // Select a hospital from the nearby list (updates destination + nearest)
+  // ─────────────────────────────────────────────────────────────────────────
+  const handleHospitalSelect = (h, idx) => {
+    setSelectedHospitalIdx(idx)
+    const dist = h.distance != null ? `${h.distance.toFixed(1)} km` : null
+    setNearestHospital({
+      name: h.name || 'Hospital',
+      address: h.address || '',
+      distance: dist,
+      rating: h.rating,
+      openNow: h.openNow,
+      location: h.location,
+      placeId: h.id,
+      phone: h.phone
+    })
+    setDestination(h.location)
+    setRoutes([])
+    setActiveRoute(null)
+    setPhase('route_calc')
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // Manual refetch (user taps "Change")
   // ─────────────────────────────────────────────────────────────────────────
   const retryHospitalFetch = () => {
     if (!stableGpsRef.current) return
@@ -390,7 +413,7 @@ export default function Emergency() {
   }
 
   // ─────────────────────────────────────────────────────────────────────────
-  // Build map markers  — hospital gets its own distinct marker
+  // Build map markers — all hospitals shown, selected one bounces
   // ─────────────────────────────────────────────────────────────────────────
   const mapMarkers = []
   if (userLocation) mapMarkers.push({ position: userLocation, title: 'Your Location', type: 'user' })
@@ -399,13 +422,33 @@ export default function Emergency() {
     nearbyHospitals.forEach((h, idx) => {
       if (h.location) {
         const distString = h.distance != null ? `${h.distance.toFixed(1)} km` : ''
-        const phoneLink = h.phone !== 'N/A' ? `<br/><a href="tel:${h.phone}" style="font-size:11px;color:#2563eb;text-decoration:none;">📞 ${h.phone}</a>` : ''
+        const phoneLink = h.phone && h.phone !== 'N/A' ? `<br/><a href="tel:${h.phone}" style="font-size:11px;color:#2563eb">📞 ${h.phone}</a>` : ''
+        const isSelected = idx === selectedHospitalIdx
+        const roughEta = h.distance != null ? Math.ceil(h.distance / 30 * 60) : null
+        const eta = isSelected && activeRoute ? activeRoute.duration : (roughEta ? `~${roughEta} min` : null)
         mapMarkers.push({
           position: h.location,
           title: h.name || 'Hospital',
           type: 'hospital',
-          bounce: idx === 0, // Only bounce the closest one
-          info: `<div style="padding:8px;max-width:200px;font-family:sans-serif"><strong style="color:#C8102E">${h.name}</strong><br/><span style="font-size:11px;color:#666">${h.address || ''}</span>${phoneLink}${distString ? `<br/><span style="font-size:11px;color:#16a34a">📍 ${distString}</span>` : ''}</div>`
+          bounce: isSelected,
+          hospitalIdx: idx,
+          info: `
+            <div style="padding:4px; max-width:220px; font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+              <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:8px; margin-bottom:4px;">
+                <strong style="color:#111827; font-size:13px; line-height:1.2; font-weight:700;">${h.name}</strong>
+                ${h.phone && h.phone !== 'N/A' ? `
+                  <a href="tel:${h.phone}" style="flex-shrink:0; width:28px; height:28px; background:#ecfdf5; border:1px solid #d1fae5; border-radius:8px; display:flex; align-items:center; justify-content:center; text-decoration:none;" title="Call">
+                    <span style="font-size:12px;">📞</span>
+                  </a>
+                ` : ''}
+              </div>
+              <div style="font-size:10px; color:#6b7280; line-height:1.3; margin-bottom:8px;">${h.address || ''}</div>
+              <div style="display:flex; align-items:center; gap:6px;">
+                ${distString ? `<span style="font-size:10px; font-weight:600; color:#16a34a; background:#f0fdf4; padding:2px 6px; border-radius:6px;">📍 ${distString}</span>` : ''}
+                ${eta ? `<span style="font-size:10px; font-weight:600; color:#ea580c; background:#fff7ed; padding:2px 6px; border-radius:6px;">⏱️ ${eta}</span>` : ''}
+              </div>
+            </div>
+          `
         })
       }
     })
@@ -432,7 +475,7 @@ export default function Emergency() {
 
       {/* ── Header ─────────────────────────────────────────────────────── */}
       <div className="bg-white border-b border-gray-100 flex items-center gap-3 px-4 py-3.5 sticky top-0 z-10 shadow-sm">
-        <button onClick={() => navigate('/')} className="w-9 h-9 bg-gray-50 hover:bg-gray-100 text-gray-600 rounded-xl flex items-center justify-center transition-all active:scale-95 shrink-0">
+        <button onClick={() => navigate('/')} className="flex items-center justify-center text-gray-600 transition-all w-9 h-9 bg-gray-50 hover:bg-gray-100 rounded-xl active:scale-95 shrink-0">
           <ChevronLeft size={20} />
         </button>
         <div className="flex-1 min-w-0">
@@ -467,70 +510,122 @@ export default function Emergency() {
 
       {/* ── Map ────────────────────────────────────────────────────────── */}
       <div className="px-4 mt-4">
-        <div className="rounded-2xl overflow-hidden shadow-md border border-gray-100">
+        <div className="overflow-hidden border border-gray-100 shadow-md rounded-2xl">
           <MapView
             center={mapCenter}
             markers={mapMarkers}
             routes={routePoly}
             activeRoute={activeRoute}
             userLocation={userLocation}
-            height="320px"
+            height="340px"
             traffic={true}
             show3D={show3D}
             onToggle3D={() => setShow3D(v => !v)}
-            onMapClick={(phase === 'init') ? (loc) => { setDestination(loc); setNearestHospital(null); setNearbyHospitals([]); setPhase('route_calc') } : undefined}
+            onMapClick={undefined}
+            onHospitalSelect={(idx) => nearbyHospitals[idx] && handleHospitalSelect(nearbyHospitals[idx], idx)}
             onRefreshLocation={refreshLocation}
-            zoom={15}
+            zoom={14}
             demoMode={demoMode}
             demoPath={demoPath}
             demoAmbulancePos={demoAmbulancePos}
             demoProgress={demoProgress}
             userAvatar={userAvatar}
-            markerType="hospital"
           />
         </div>
       </div>
 
-      {/* ── Hospital Info Card (shown once hospital is found) ─────────── */}
-      {nearestHospital && (
-        <div className="px-4 mt-3">
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-3.5 flex items-center gap-3">
-            <div className="w-10 h-10 bg-red-50 rounded-xl flex items-center justify-center shrink-0">
-              <Building2 size={18} className="text-[#C8102E]" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-bold text-gray-900 truncate">{nearestHospital.name}</p>
-              {nearestHospital.address && <p className="text-[11px] text-gray-400 truncate">{nearestHospital.address}</p>}
-              <div className="flex items-center gap-2 mt-1">
-                {nearestHospital.distance && (
-                  <span className="text-[10px] text-gray-500 flex items-center gap-0.5"><MapPin size={9} /> {nearestHospital.distance}</span>
-                )}
-                {nearestHospital.openNow === true && (
-                  <span className="text-[10px] font-semibold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded-full">● Open now</span>
-                )}
-                {nearestHospital.openNow === false && (
-                  <span className="text-[10px] text-red-500 bg-red-50 px-1.5 py-0.5 rounded-full">○ Closed</span>
-                )}
-                {nearestHospital.phone && nearestHospital.phone !== 'N/A' && (
-                  <a href={`tel:${nearestHospital.phone}`} className="text-[10px] text-blue-600 hover:underline flex items-center gap-0.5 ml-1">
-                    <Phone size={9} /> {nearestHospital.phone}
+
+
+      {/* ── Nearby Hospitals + Actions ──────────────────────────────── */}
+      {nearbyHospitals.length > 0 && (
+        <div className="px-4 mt-4 space-y-2">
+
+          <div className="flex items-center justify-between mb-1">
+            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Hospitals Nearby</p>
+            <button onClick={retryHospitalFetch} className="text-[10px] text-[#C8102E] font-semibold hover:underline">Refresh</button>
+          </div>
+
+          {nearbyHospitals.map((h, idx) => {
+            const isSelected = idx === selectedHospitalIdx
+            const dist = h.distance != null ? h.distance.toFixed(1) : null
+            const roughEta = h.distance != null ? Math.ceil(h.distance / 30 * 60) : null
+            const eta = isSelected && activeRoute ? activeRoute.duration : (roughEta ? `~${roughEta} min` : null)
+            return (
+              <div
+                key={h.id || idx}
+                onClick={() => handleHospitalSelect(h, idx)}
+                className={`flex items-center gap-3 px-3 py-2.5 rounded-2xl border cursor-pointer transition-all ${
+                  isSelected
+                    ? 'bg-red-50 border-[#C8102E]/30 ring-1 ring-[#C8102E]/10'
+                    : 'bg-white border-gray-100 hover:bg-gray-50 hover:border-gray-200'
+                }`}
+              >
+                {/* Rank */}
+                <div className={`w-8 h-8 rounded-xl flex items-center justify-center text-xs font-black shrink-0 ${
+                  isSelected ? 'bg-[#C8102E] text-white' : 'bg-gray-100 text-gray-500'
+                }`}>{idx + 1}</div>
+
+                {/* Info */}
+                <div className="flex-1 min-w-0">
+                  <p className={`text-sm font-bold truncate leading-tight ${isSelected ? 'text-[#C8102E]' : 'text-gray-800'}`}>{h.name}</p>
+                  <div className="flex items-center gap-2 mt-0.5">
+                    {dist && <span className="flex items-center gap-0.5 text-[10px] text-gray-400"><MapPin size={8}/>{dist} km</span>}
+                    {eta && <span className={`flex items-center gap-0.5 text-[10px] font-semibold ${isSelected && activeRoute ? 'text-[#C8102E]' : 'text-gray-400'}`}><Clock size={8}/>{eta}</span>}
+                    {h.openNow === true && <span className="text-[10px] font-semibold text-emerald-500">● Open</span>}
+                    {h.openNow === false && <span className="text-[10px] text-red-400">○ Closed</span>}
+                  </div>
+                </div>
+
+                {/* Call */}
+                {h.phone && h.phone !== 'N/A' ? (
+                  <a href={`tel:${h.phone}`} onClick={e => e.stopPropagation()}
+                    className="flex items-center justify-center transition-all border w-9 h-9 bg-emerald-50 hover:bg-emerald-100 border-emerald-100 rounded-xl shrink-0 active:scale-95">
+                    <Phone size={14} className="text-emerald-600" />
                   </a>
+                ) : (
+                  <div className="flex items-center justify-center border border-gray-100 w-9 h-9 bg-gray-50 rounded-xl shrink-0">
+                    <Phone size={14} className="text-gray-300" />
+                  </div>
                 )}
               </div>
+            )
+          })}
+
+          {/* Action buttons */}
+          {nearestHospital && (
+            <div className="pt-1 space-y-2">
+              <button
+                onClick={fetchAmbulances}
+                disabled={!stableGpsRef.current || loading}
+                className="w-full bg-[#C8102E] hover:bg-[#a50d26] disabled:opacity-50 text-white font-bold py-4 rounded-2xl flex items-center justify-center gap-3 text-base shadow-lg shadow-[#C8102E]/20 transition-all active:scale-95"
+              >
+                {loading ? <Loader2 size={22} className="animate-spin" /> : <Ambulance size={22} />}
+                {loading ? 'Finding ambulances...' : 'Find Nearby Ambulances'}
+              </button>
+              <button onClick={() => setPhase('civilian_direct')}
+                className="flex items-center justify-center w-full gap-2 py-3 text-sm font-semibold text-gray-600 transition-all bg-white border border-gray-200 shadow-sm rounded-2xl hover:border-amber-200 hover:bg-amber-50 hover:text-amber-700 active:scale-95">
+                <Car size={16} /> Self-Drive / Civilian Mode
+              </button>
             </div>
-            <button
-              onClick={retryHospitalFetch}
-              className="shrink-0 text-[10px] font-semibold text-gray-400 hover:text-[#C8102E] transition-colors"
-            >
-              Change
-            </button>
-          </div>
+          )}
         </div>
       )}
 
-      {/* Map click hint */}
-      {phase === 'init' && !nearestHospital && (
-        <p className="text-xs text-center text-gray-400 mt-3">Tap the map to set a custom destination</p>
+      {/* No hospitals found */}
+      {!nearbyHospitals.length && phase === 'init' && stableGpsRef.current && (
+        <div className="px-4 mt-4 space-y-2">
+          <button onClick={fetchAmbulances} className="w-full bg-[#C8102E] hover:bg-[#a50d26] text-white font-bold py-4 rounded-2xl flex items-center justify-center gap-3 shadow-lg shadow-[#C8102E]/20 transition-all active:scale-95">
+            <Ambulance size={22} /> Find Nearby Ambulances
+          </button>
+          <button onClick={retryHospitalFetch} className="flex items-center justify-center w-full gap-2 py-3 text-sm font-semibold text-gray-700 transition-all bg-white border border-gray-200 shadow-sm rounded-2xl hover:bg-gray-50 active:scale-95">
+            <Route size={16} /> Retry: Find Nearest Hospital
+          </button>
+        </div>
+      )}
+
+      {/* Map click hint — only shown when no hospitals loaded yet */}
+      {phase === 'init' && !nearestHospital && !nearbyHospitals.length && (
+        <p className="mt-3 text-xs text-center text-gray-400">Detecting your location...</p>
       )}
 
       {/* ── Phase: fetching_hospital ──────────────────────────────────── */}
@@ -538,7 +633,7 @@ export default function Emergency() {
         <div className="px-4 mt-6 text-center">
           <div className="w-12 h-12 border-4 border-[#C8102E] border-t-transparent rounded-full animate-spin mx-auto mb-3" />
           <p className="text-sm font-semibold text-gray-700">Locating nearest hospital...</p>
-          <p className="text-xs text-gray-400 mt-1">Using your GPS coordinates</p>
+          <p className="mt-1 text-xs text-gray-400">Using your GPS coordinates</p>
         </div>
       )}
 
@@ -556,13 +651,13 @@ export default function Emergency() {
           <div className="grid grid-cols-2 gap-3">
             <button
               onClick={retryHospitalFetch}
-              className="flex items-center justify-center gap-2 bg-white border border-gray-200 text-gray-700 font-semibold py-3 rounded-2xl hover:border-gray-300 hover:bg-gray-50 transition-all active:scale-95 shadow-sm text-sm"
+              className="flex items-center justify-center gap-2 py-3 text-sm font-semibold text-gray-700 transition-all bg-white border border-gray-200 shadow-sm rounded-2xl hover:border-gray-300 hover:bg-gray-50 active:scale-95"
             >
               <Route size={16} /> Change Hospital
             </button>
             <button
               onClick={() => setPhase('civilian_direct')}
-              className="flex items-center justify-center gap-2 bg-white border border-gray-200 text-gray-700 font-semibold py-3 rounded-2xl hover:border-amber-300 hover:bg-amber-50 hover:text-amber-700 transition-all active:scale-95 shadow-sm text-sm"
+              className="flex items-center justify-center gap-2 py-3 text-sm font-semibold text-gray-700 transition-all bg-white border border-gray-200 shadow-sm rounded-2xl hover:border-amber-300 hover:bg-amber-50 hover:text-amber-700 active:scale-95"
             >
               <Car size={16} /> Civilian Mode
             </button>
@@ -581,7 +676,7 @@ export default function Emergency() {
           </button>
           <button
             onClick={retryHospitalFetch}
-            className="w-full flex items-center justify-center gap-2 bg-white border border-gray-200 text-gray-700 font-semibold py-3 rounded-2xl hover:bg-gray-50 transition-all active:scale-95 shadow-sm text-sm"
+            className="flex items-center justify-center w-full gap-2 py-3 text-sm font-semibold text-gray-700 transition-all bg-white border border-gray-200 shadow-sm rounded-2xl hover:bg-gray-50 active:scale-95"
           >
             <Route size={16} /> Retry: Find Nearest Hospital
           </button>
@@ -591,7 +686,7 @@ export default function Emergency() {
       {/* ── Phase: routes loading ─────────────────────────────────────── */}
       {phase === 'route_calc' && routes.length === 0 && loading && (
         <div className="px-4 mt-6 text-center">
-          <div className="w-10 h-10 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-3" />
+          <div className="w-10 h-10 mx-auto mb-3 border-4 border-blue-500 rounded-full border-t-transparent animate-spin" />
           <p className="text-sm text-gray-500">Calculating traffic-aware routes...</p>
         </div>
       )}
@@ -599,7 +694,7 @@ export default function Emergency() {
       {/* ── Phase: Route Selection ────────────────────────────────────── */}
       {phase === 'route_calc' && routes.length > 0 && (
         <div className="px-4 mt-5">
-          <h2 className="font-bold text-gray-900 mb-3 flex items-center gap-2">
+          <h2 className="flex items-center gap-2 mb-3 font-bold text-gray-900">
             <Route size={18} className="text-blue-500" /> Emergency Routes
           </h2>
           <div className="space-y-2">
@@ -613,7 +708,7 @@ export default function Emergency() {
                   <Navigation size={18} />
                 </div>
                 <div className="flex-1">
-                  <p className="font-semibold text-sm text-gray-900">{route.distance} · {route.duration}</p>
+                  <p className="text-sm font-semibold text-gray-900">{route.distance} · {route.duration}</p>
                   <p className="text-xs text-gray-400">{route.trafficStatus === 'heavy' ? 'Heavy traffic' : route.trafficStatus === 'moderate' ? 'Moderate traffic' : 'Clear route'}</p>
                 </div>
                 {route.fastest && <span className="text-xs bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full font-semibold shrink-0">Fastest</span>}
@@ -640,7 +735,7 @@ export default function Emergency() {
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-[10px] font-bold text-[#C8102E] tracking-widest uppercase mb-0.5">Destination Hospital</p>
-                <p className="text-sm font-bold text-gray-900 leading-tight">{nearestHospital.name}</p>
+                <p className="text-sm font-bold leading-tight text-gray-900">{nearestHospital.name}</p>
                 <div className="flex items-center gap-2 mt-1">
                    <Clock size={11} className="text-[#C8102E]" />
                    <span className="text-[11px] font-semibold text-gray-700">{activeRoute ? activeRoute.duration : nearestHospital.distance} to arrival</span>
@@ -649,20 +744,20 @@ export default function Emergency() {
             </div>
           )}
 
-          <h2 className="font-bold text-gray-900 mb-3 flex items-center gap-2 text-base">
+          <h2 className="flex items-center gap-2 mb-3 text-base font-bold text-gray-900">
             <Ambulance size={18} className="text-[#C8102E]" /> Nearby Ambulances
           </h2>
-          <div className="space-y-3 max-h-72 overflow-y-auto no-scrollbar">
+          <div className="space-y-3 overflow-y-auto max-h-72 no-scrollbar">
             {ambulances.map(amb => (
-              <div key={amb.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 flex gap-3 items-center hover:shadow-md transition-all">
-                <div className="w-12 h-12 bg-red-50 rounded-xl flex items-center justify-center shrink-0">
+              <div key={amb.id} className="flex items-center gap-3 p-4 transition-all bg-white border border-gray-100 shadow-sm rounded-2xl hover:shadow-md">
+                <div className="flex items-center justify-center w-12 h-12 bg-red-50 rounded-xl shrink-0">
                   <Ambulance size={22} className="text-[#C8102E]" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="font-semibold text-sm text-gray-900">{amb.type} Ambulance</p>
+                  <p className="text-sm font-semibold text-gray-900">{amb.type} Ambulance</p>
                   <p className="text-xs text-gray-400">{amb.vehicleNumber} · {amb.driver?.name}</p>
                   <div className="flex items-center gap-3 mt-1">
-                    <span className="text-xs flex items-center gap-1 text-emerald-600 font-medium"><Clock size={11} /> {amb.eta}m ETA</span>
+                    <span className="flex items-center gap-1 text-xs font-medium text-emerald-600"><Clock size={11} /> {amb.eta}m ETA</span>
                     <span className="text-xs text-gray-400">{amb.distance} km</span>
                   </div>
                 </div>
@@ -672,8 +767,8 @@ export default function Emergency() {
               </div>
             ))}
             {ambulances.length === 0 && (
-              <div className="text-center py-10 bg-white rounded-2xl border border-gray-100">
-                <p className="text-gray-400 text-sm">No ambulances available nearby</p>
+              <div className="py-10 text-center bg-white border border-gray-100 rounded-2xl">
+                <p className="text-sm text-gray-400">No ambulances available nearby</p>
                 <button onClick={() => setPhase('civilian_direct')} className="mt-3 text-[#C8102E] text-sm font-semibold hover:underline">
                   Try Civilian Mode
                 </button>
@@ -688,20 +783,20 @@ export default function Emergency() {
         <div className="px-4 mt-8 space-y-4">
           <div className="text-center">
             {!demoMode && <div className="w-16 h-16 border-4 border-[#C8102E] border-t-transparent rounded-full animate-spin mx-auto mb-4" />}
-            <h2 className="font-bold text-gray-900 text-lg">{demoMode ? 'Ambulance En Route' : 'Finding Driver...'}</h2>
-            <p className="text-gray-400 text-sm mt-1">Request ID: {requestStatus?.requestId}</p>
-            {!demoMode && <p className="text-gray-400 text-xs mt-2">Drivers have 5 minutes to accept</p>}
+            <h2 className="text-lg font-bold text-gray-900">{demoMode ? 'Ambulance En Route' : 'Finding Driver...'}</h2>
+            <p className="mt-1 text-sm text-gray-400">Request ID: {requestStatus?.requestId}</p>
+            {!demoMode && <p className="mt-2 text-xs text-gray-400">Drivers have 5 minutes to accept</p>}
           </div>
           {demoMode && (
-            <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-4">
+            <div className="p-4 border bg-emerald-50 border-emerald-200 rounded-2xl">
               <div className="flex items-center gap-3">
-                <div className="w-12 h-12 bg-emerald-100 rounded-xl flex items-center justify-center">
+                <div className="flex items-center justify-center w-12 h-12 bg-emerald-100 rounded-xl">
                   <Timer size={22} className="text-emerald-600" />
                 </div>
                 <div className="flex-1">
                   <p className="text-sm font-bold text-gray-900">Arriving in {Math.floor(demoCountdown / 60)}:{String(demoCountdown % 60).padStart(2, '0')}</p>
                   <div className="w-full h-1.5 bg-emerald-200 rounded-full mt-2">
-                    <div className="h-full bg-emerald-500 rounded-full transition-all duration-1000" style={{ width: `${(demoCountdown / 60) * 100}%` }} />
+                    <div className="h-full transition-all duration-1000 rounded-full bg-emerald-500" style={{ width: `${(demoCountdown / 60) * 100}%` }} />
                   </div>
                 </div>
                 <p className="text-xs font-bold text-emerald-600">{Math.round(demoProgress * 100)}%</p>
@@ -713,16 +808,16 @@ export default function Emergency() {
 
       {/* ── Arrival Notification ──────────────────────────────────────── */}
       {showArrivalNotification && (
-        <div className="fixed top-20 left-4 right-4 z-50">
-          <div className="bg-emerald-500 text-white rounded-2xl shadow-2xl p-4 flex items-center gap-4">
-            <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center shrink-0">
+        <div className="fixed z-50 top-20 left-4 right-4">
+          <div className="flex items-center gap-4 p-4 text-white shadow-2xl bg-emerald-500 rounded-2xl">
+            <div className="flex items-center justify-center w-12 h-12 bg-white rounded-full shrink-0">
               <Ambulance size={22} className="text-emerald-600" />
             </div>
             <div className="flex-1">
-              <h3 className="font-bold flex items-center gap-2">Ambulance Arrived! <CheckCircle size={18} /></h3>
-              <p className="text-emerald-100 text-xs">Your ambulance has reached your location</p>
+              <h3 className="flex items-center gap-2 font-bold">Ambulance Arrived! <CheckCircle size={18} /></h3>
+              <p className="text-xs text-emerald-100">Your ambulance has reached your location</p>
             </div>
-            <button onClick={() => setShowArrivalNotification(false)} className="w-8 h-8 bg-emerald-600 rounded-full flex items-center justify-center"><X size={16} /></button>
+            <button onClick={() => setShowArrivalNotification(false)} className="flex items-center justify-center w-8 h-8 rounded-full bg-emerald-600"><X size={16} /></button>
           </div>
         </div>
       )}
@@ -730,7 +825,7 @@ export default function Emergency() {
       {/* ── Phase: Tracking ──────────────────────────────────────────── */}
       {phase === 'tracking' && requestStatus?.status === 'accepted' && (
         <div className="px-4 mt-5">
-          <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-4">
+          <div className="p-4 border bg-emerald-50 border-emerald-200 rounded-2xl">
             <div className="flex items-center gap-3 mb-3">
               <CheckCircle size={22} className="text-emerald-600" />
               <div>
@@ -738,20 +833,20 @@ export default function Emergency() {
                 <p className="text-xs text-emerald-700">ETA: {requestStatus.eta} minutes</p>
               </div>
             </div>
-            <div className="bg-white rounded-xl p-3 space-y-2">
+            <div className="p-3 space-y-2 bg-white rounded-xl">
               <div className="flex items-center gap-3">
-                <div className="w-9 h-9 bg-gray-100 rounded-full flex items-center justify-center"><User size={16} className="text-gray-500" /></div>
+                <div className="flex items-center justify-center bg-gray-100 rounded-full w-9 h-9"><User size={16} className="text-gray-500" /></div>
                 <div>
-                  <p className="font-semibold text-sm text-gray-900">{requestStatus.ambulance?.driver?.name}</p>
+                  <p className="text-sm font-semibold text-gray-900">{requestStatus.ambulance?.driver?.name}</p>
                   <p className="text-xs text-gray-400">{requestStatus.ambulance?.vehicleNumber}</p>
                 </div>
-                <a href={`tel:${requestStatus.ambulance?.driver?.phone}`} className="ml-auto w-9 h-9 bg-emerald-100 rounded-full flex items-center justify-center text-emerald-600"><Phone size={15} /></a>
+                <a href={`tel:${requestStatus.ambulance?.driver?.phone}`} className="flex items-center justify-center ml-auto rounded-full w-9 h-9 bg-emerald-100 text-emerald-600"><Phone size={15} /></a>
               </div>
               <div className="flex items-center gap-2 text-xs text-emerald-600"><Activity size={13} className="animate-pulse" /> Live tracking active</div>
             </div>
           </div>
-          <div className="mt-3 grid grid-cols-2 gap-3">
-            <button onClick={() => setPhase('init')} className="bg-white border border-gray-200 text-gray-700 font-semibold py-3 rounded-2xl hover:bg-gray-50 transition-all active:scale-95 text-sm shadow-sm">New Request</button>
+          <div className="grid grid-cols-2 gap-3 mt-3">
+            <button onClick={() => setPhase('init')} className="py-3 text-sm font-semibold text-gray-700 transition-all bg-white border border-gray-200 shadow-sm rounded-2xl hover:bg-gray-50 active:scale-95">New Request</button>
             <button onClick={() => navigate('/')} className="bg-[#C8102E] hover:bg-[#a50d26] text-white font-bold py-3 rounded-2xl transition-all active:scale-95 text-sm shadow-sm shadow-[#C8102E]/15">Done</button>
           </div>
         </div>
@@ -760,11 +855,11 @@ export default function Emergency() {
       {/* ── Phase: No Ambulance ─────────────────────────────────────── */}
       {phase === 'civilian_prompt' && (
         <div className="px-4 mt-5 text-center">
-          <div className="w-16 h-16 bg-amber-50 rounded-2xl flex items-center justify-center mx-auto mb-3">
+          <div className="flex items-center justify-center w-16 h-16 mx-auto mb-3 bg-amber-50 rounded-2xl">
             <AlertTriangle size={30} className="text-amber-500" />
           </div>
-          <h2 className="font-bold text-gray-900 text-base">No Ambulance Available</h2>
-          <p className="text-sm text-gray-500 mt-1 mb-5">Try Civilian Mode to use your own vehicle as an emergency vehicle.</p>
+          <h2 className="text-base font-bold text-gray-900">No Ambulance Available</h2>
+          <p className="mt-1 mb-5 text-sm text-gray-500">Try Civilian Mode to use your own vehicle as an emergency vehicle.</p>
           <button onClick={() => setPhase('civilian_direct')} className="w-full bg-[#C8102E] hover:bg-[#a50d26] text-white font-bold py-4 rounded-2xl flex items-center justify-center gap-2 shadow-md shadow-[#C8102E]/15 transition-all active:scale-95">
             <Car size={20} /> Activate Civilian Mode
           </button>
@@ -775,10 +870,10 @@ export default function Emergency() {
       {/* ── Phase: Civilian Form ─────────────────────────────────────── */}
       {(phase === 'civilian_direct' || (phase === 'civilian_prompt' && !civilianResult)) && (
         <div className="px-4 mt-5">
-          <h2 className="font-bold text-gray-900 mb-3 flex items-center gap-2">
+          <h2 className="flex items-center gap-2 mb-3 font-bold text-gray-900">
             <Shield size={18} className="text-amber-500" /> Civilian Emergency Mode
           </h2>
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 space-y-3">
+          <div className="p-4 space-y-3 bg-white border border-gray-100 shadow-sm rounded-2xl">
             {[
               { key: 'vehicleNumber', label: 'Vehicle Number', ph: 'WB-02-A-1234' },
               { key: 'purpose', label: 'Emergency Purpose', ph: 'Taking patient to hospital' },
@@ -786,7 +881,7 @@ export default function Emergency() {
             ].map(f => (
               <div key={f.key}>
                 <label className="text-[10px] font-bold text-gray-400 uppercase block mb-1.5">{f.label}</label>
-                <input className="input-field text-sm" placeholder={f.ph} value={civilianForm[f.key]} onChange={e => setCivilianForm(p => ({ ...p, [f.key]: e.target.value }))} />
+                <input className="text-sm input-field" placeholder={f.ph} value={civilianForm[f.key]} onChange={e => setCivilianForm(p => ({ ...p, [f.key]: e.target.value }))} />
               </div>
             ))}
             <button
@@ -804,7 +899,7 @@ export default function Emergency() {
       {/* ── Phase: Civilian Active ───────────────────────────────────── */}
       {phase === 'civilian_active' && civilianResult?.verified && (
         <div className="px-4 mt-5">
-          <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4">
+          <div className="p-4 border bg-amber-50 border-amber-200 rounded-2xl">
             <div className="flex items-center gap-3 mb-3">
               <Shield size={22} className="text-amber-600" />
               <div>
@@ -820,8 +915,8 @@ export default function Emergency() {
               ))}
             </div>
           </div>
-          <div className="mt-3 grid grid-cols-2 gap-3">
-            <button onClick={() => setPhase('init')} className="bg-white border border-gray-200 text-gray-700 font-semibold py-3 rounded-2xl hover:bg-gray-50 transition-all active:scale-95 text-sm">Deactivate</button>
+          <div className="grid grid-cols-2 gap-3 mt-3">
+            <button onClick={() => setPhase('init')} className="py-3 text-sm font-semibold text-gray-700 transition-all bg-white border border-gray-200 rounded-2xl hover:bg-gray-50 active:scale-95">Deactivate</button>
             <button onClick={() => navigate('/')} className="bg-[#C8102E] hover:bg-[#a50d26] text-white font-bold py-3 rounded-2xl transition-all active:scale-95 text-sm shadow-sm shadow-[#C8102E]/15">Done</button>
           </div>
         </div>
@@ -832,29 +927,29 @@ export default function Emergency() {
       {/* ── AI Chat FAB ──────────────────────────────────────────────── */}
       <button
         onClick={() => setChatOpen(v => !v)}
-        className="fixed bottom-6 right-4 z-50 w-12 h-12 bg-blue-600 hover:bg-blue-700 text-white rounded-full shadow-lg shadow-blue-500/25 flex items-center justify-center transition-all hover:scale-110 active:scale-90"
+        className="fixed z-50 flex items-center justify-center w-12 h-12 text-white transition-all bg-blue-600 rounded-full shadow-lg bottom-6 right-4 hover:bg-blue-700 shadow-blue-500/25 hover:scale-110 active:scale-90"
       >
         <MessageSquare size={20} />
       </button>
 
       {chatOpen && (
         <div className="fixed bottom-24 right-4 left-4 sm:left-auto sm:w-80 z-50 bg-white rounded-2xl shadow-2xl border border-gray-100 flex flex-col max-h-[60vh]">
-          <div className="p-3 border-b border-gray-100 flex items-center justify-between">
-            <h3 className="font-semibold text-sm text-gray-900 flex items-center gap-2">
+          <div className="flex items-center justify-between p-3 border-b border-gray-100">
+            <h3 className="flex items-center gap-2 text-sm font-semibold text-gray-900">
               <Siren size={14} className="text-[#C8102E]" /> LifeLine+ AI
             </h3>
             <button onClick={() => setChatOpen(false)}><X size={16} className="text-gray-400" /></button>
           </div>
-          <div className="flex-1 overflow-y-auto p-3 space-y-3 text-sm">
+          <div className="flex-1 p-3 space-y-3 overflow-y-auto text-sm">
             {messages.map((m, i) => (
               <div key={i} className={`${m.role === 'user' ? 'ml-auto bg-red-50 text-gray-900' : 'bg-gray-100 text-gray-700'} rounded-xl px-3 py-2 max-w-[85%] w-fit`}>
                 {m.text}
               </div>
             ))}
           </div>
-          <div className="p-3 border-t border-gray-100 flex gap-2">
+          <div className="flex gap-2 p-3 border-t border-gray-100">
             <input
-              className="input-field text-sm py-2 flex-1"
+              className="flex-1 py-2 text-sm input-field"
               placeholder="Ask for help..."
               value={inputMsg}
               onChange={e => setInputMsg(e.target.value)}

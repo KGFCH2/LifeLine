@@ -102,6 +102,7 @@ export default function MapView({
   demoProgress = 0,
   userAvatar = null,
   onRefreshLocation,
+  onHospitalSelect,
 }) {
   const containerRef = useRef(null)
   const mapRef = useRef(null)         
@@ -250,20 +251,24 @@ export default function MapView({
         animation: marker.bounce ? window.google.maps.Animation.BOUNCE : null,
       })
 
-      if (marker.info) {
-        const iw = new window.google.maps.InfoWindow({
+      if (marker.info || (marker.type === 'hospital')) {
+        const iw = marker.info ? new window.google.maps.InfoWindow({
           content: marker.info,
           maxWidth: 240,
-        })
+        }) : null
         m.addListener('click', () => {
           infoWindowsRef.current.forEach(w => w.close())
-          iw.open(mapRef.current, m)
+          if (iw) iw.open(mapRef.current, m)
+          // Fire hospital selection callback
+          if (marker.type === 'hospital' && onHospitalSelect && marker.hospitalIdx != null) {
+            onHospitalSelect(marker.hospitalIdx)
+          }
         })
-        // Auto-open hospital info window
-        if (marker.type === 'hospital') {
+        // Auto-open selected (bouncing) hospital info window
+        if (marker.type === 'hospital' && marker.bounce && iw) {
           setTimeout(() => iw.open(mapRef.current, m), 800)
         }
-        infoWindowsRef.current.push(iw)
+        if (iw) infoWindowsRef.current.push(iw)
       }
 
       markersRef.current.push(m)
