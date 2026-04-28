@@ -128,14 +128,14 @@ export default function Doctors() {
   if (!user) return showLogin ? <LoginModal onClose={() => setShowLogin(false)} /> : null
 
   return (
-    <div className="bg-gray-50 min-h-screen pb-24" style={{ fontFamily: "'Inter', sans-serif" }}>
+    <div className="bg-gray-50 min-h-screen pb-24">
 
       {/* Page Header */}
       <div className="bg-white border-b border-gray-100 px-4 sm:px-8 pt-8 pb-5">
         <div className="max-w-4xl mx-auto">
           <div className="flex items-end justify-between mb-5">
             <div>
-              <p className="text-xs font-medium text-[#C8102E] mb-1" style={{ fontFamily: "'JetBrains Mono', monospace" }}>SPECIALISTS</p>
+              <p className="text-xs font-medium text-[#C8102E] mb-1">SPECIALISTS</p>
               <h1 className="text-2xl font-extrabold text-gray-900">Find a Doctor</h1>
               <p className="text-sm text-gray-400 mt-0.5">Book appointments with verified specialists near you</p>
             </div>
@@ -194,7 +194,6 @@ export default function Doctors() {
                     ? 'bg-[#C8102E] text-white shadow-sm'
                     : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
                 }`}
-                style={{ fontFamily: "'JetBrains Mono', monospace" }}
               >
                 {s}
               </button>
@@ -237,7 +236,7 @@ export default function Doctors() {
                           <h3 className="font-bold text-gray-900 text-sm">{doc.name}</h3>
                           <div className={`inline-flex items-center gap-1 mt-1 px-2 py-0.5 rounded-md ${specStyle.bg}`}>
                             <span className={`w-1.5 h-1.5 rounded-full ${specStyle.dot}`} />
-                            <span className={`text-[10px] font-semibold ${specStyle.text}`} style={{ fontFamily: "'JetBrains Mono', monospace" }}>{doc.specialty}</span>
+                            <span className={`text-[10px] font-semibold ${specStyle.text}`}>{doc.specialty}</span>
                           </div>
                         </div>
                         <span className={`shrink-0 text-[10px] font-semibold px-2 py-0.5 rounded-md ${doc.availableToday ? 'bg-emerald-50 text-emerald-700' : 'bg-gray-100 text-gray-400'}`}>
@@ -316,7 +315,7 @@ export default function Doctors() {
                 <div className="flex items-start justify-between mb-5">
                   <div>
                     <h2 className="font-extrabold text-gray-900">Book Appointment</h2>
-                    <p className="text-xs text-gray-400 mt-0.5" style={{ fontFamily: "'JetBrains Mono', monospace" }}>
+                    <p className="text-xs text-gray-400 mt-0.5">
                       {selectedDoctor.name} · {selectedDoctor.specialty}
                     </p>
                   </div>
@@ -330,7 +329,7 @@ export default function Doctors() {
 
                 {/* Slot picker */}
                 <div className="mb-5">
-                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-3" style={{ fontFamily: "'JetBrains Mono', monospace" }}>Available Slots</p>
+                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-3">Available Slots</p>
                   {slots.length === 0 ? (
                     <div className="text-center py-6 text-sm text-gray-300">Loading slots...</div>
                   ) : (
@@ -357,7 +356,7 @@ export default function Doctors() {
 
                 {/* Patient details */}
                 <div className="space-y-3 mb-5">
-                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest" style={{ fontFamily: "'JetBrains Mono', monospace" }}>Patient Details</p>
+                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Patient Details</p>
                   <input className="input-field text-sm" placeholder="Patient Name" value={patientForm.name} onChange={e => setPatientForm(f => ({ ...f, name: e.target.value }))} />
                   <input className="input-field text-sm" placeholder="Contact Number" value={patientForm.contact} onChange={e => setPatientForm(f => ({ ...f, contact: e.target.value }))} />
                   <input className="input-field text-sm" placeholder="Reason for visit" value={patientForm.reason} onChange={e => setPatientForm(f => ({ ...f, reason: e.target.value }))} />
