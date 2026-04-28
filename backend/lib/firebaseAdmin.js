@@ -4,6 +4,19 @@ let firebaseApp = null;
 let firestore = null;
 let initAttempted = false;
 
+// In-memory fallback storage when Firebase is not configured
+const memoryStore = {
+  users: new Map(),
+  documents: new Map()
+};
+
+function getMemoryCollection(collection) {
+  if (!memoryStore.documents.has(collection)) {
+    memoryStore.documents.set(collection, new Map());
+  }
+  return memoryStore.documents.get(collection);
+}
+
 export function getFirebaseAdmin() {
   if (firebaseApp) {
     console.log('🔥 [Firebase Admin] Already initialized')
@@ -57,8 +70,13 @@ export function getFirestore() {
 export async function saveDocument(collection, id, data) {
   const db = getFirestore();
   if (!db) {
-    console.error('❌ [Firestore] Database not initialized')
-    return false;
+    // Use memory fallback
+    console.log(`📝 [Memory Fallback] Saving to collection="${collection}" doc="${id}"`)
+    const coll = getMemoryCollection(collection);
+    const existing = coll.get(id) || {};
+    coll.set(id, { ...existing, ...data });
+    console.log(`✅ [Memory Fallback] Saved to ${collection}/${id}`)
+    return true;
   }
   try {
     console.log(`📝 [Firestore] Saving to collection="${collection}" doc="${id}"`)
@@ -73,7 +91,11 @@ export async function saveDocument(collection, id, data) {
 
 export async function getDocument(collection, id) {
   const db = getFirestore();
-  if (!db) return null;
+  if (!db) {
+    // Use memory fallback
+    const coll = getMemoryCollection(collection);
+    return coll.get(id) || null;
+  }
   try {
     const snapshot = await db.collection(collection).doc(id).get();
     return snapshot.exists ? snapshot.data() : null;
@@ -86,7 +108,16 @@ export async function getDocument(collection, id) {
 export async function getUserByEmail(email) {
   const db = getFirestore();
   if (!db) {
-    console.error('❌ [Firestore] Database not initialized')
+    // Use memory fallback
+    console.log(`🔍 [Memory Fallback] Searching for user with email: ${email}`)
+    const coll = getMemoryCollection('users');
+    for (const [id, data] of coll.entries()) {
+      if (data.email === email) {
+        console.log(`✅ [Memory Fallback] User found with email: ${email}`)
+        return { id, ...data };
+      }
+    }
+    console.log(`❌ [Memory Fallback] No user found with email: ${email}`)
     return null;
   }
   try {
@@ -111,8 +142,17 @@ export async function getUserByEmail(email) {
 export async function incrementSigninCount(userId) {
   const db = getFirestore();
   if (!db) {
-    console.error('❌ [Firestore] Database not initialized')
-    return false;
+    // Use memory fallback
+    console.log(`📊 [Memory Fallback] Incrementing signin count for user: ${userId}`)
+    const coll = getMemoryCollection('users');
+    const user = coll.get(userId);
+    if (!user) return false;
+    user.signinCount = (user.signinCount || 0) + 1;
+    user.lastSigninAt = new Date().toISOString();
+    user.updatedAt = new Date().toISOString();
+    coll.set(userId, user);
+    console.log(`✅ [Memory Fallback] Signin count incremented for user: ${userId}`)
+    return true;
   }
   try {
     console.log(`📊 [Firestore] Incrementing signin count for user: ${userId}`)
