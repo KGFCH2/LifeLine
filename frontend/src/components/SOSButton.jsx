@@ -56,13 +56,13 @@ export default function SOSButton() {
         <div className="fixed bottom-44 right-4 z-50 flex flex-col gap-3 animate-slide-up">
           <button
             onClick={goEmergency}
-            className="bg-red-600 text-white px-5 py-3 rounded-2xl shadow-lg font-semibold text-sm hover:bg-red-700 transition-all active:scale-95 whitespace-nowrap"
+            className="bg-[#C8102E] text-white px-5 py-3 rounded-2xl shadow-lg font-bold text-sm hover:bg-[#a50d26] transition-all active:scale-95 whitespace-nowrap"
           >
             Emergency Mode
           </button>
           <button
             onClick={voiceTrigger}
-            className={`${listening ? 'bg-green-600' : 'bg-gray-800 dark:bg-gray-700'} text-white px-5 py-3 rounded-2xl shadow-lg font-medium text-sm hover:opacity-90 transition-all active:scale-95 flex items-center gap-2 whitespace-nowrap`}
+            className={`${listening ? 'bg-emerald-600' : 'bg-gray-800'} text-white px-5 py-3 rounded-2xl shadow-lg font-medium text-sm hover:opacity-90 transition-all active:scale-95 flex items-center gap-2 whitespace-nowrap`}
           >
             <Mic size={16} />
             {listening ? 'Listening...' : 'Voice SOS'}

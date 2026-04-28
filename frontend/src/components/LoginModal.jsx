@@ -56,12 +56,15 @@ export default function LoginModal({ onClose }) {
   }
 
   return (
-    <div className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center bg-black/50 backdrop-blur-sm animate-fade-in">
-      <div className="bg-white dark:bg-gray-900 w-full sm:w-[400px] sm:rounded-2xl rounded-t-2xl p-6 shadow-2xl animate-slide-up">
+    <div className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center bg-black/40 backdrop-blur-sm">
+      <div className="bg-white w-full sm:w-[400px] sm:rounded-3xl rounded-t-3xl p-6 shadow-2xl border border-gray-100">
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-xl font-bold text-gray-900 dark:text-white">Sign In</h2>
-          <button onClick={onClose} className="p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
-            <X size={20} className="text-gray-500" />
+          <div>
+            <h2 className="text-xl font-extrabold text-gray-900">Sign In</h2>
+            <p className="text-xs text-gray-400 mt-0.5">Access emergency features</p>
+          </div>
+          <button onClick={onClose} className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center hover:bg-gray-200 transition-all">
+            <X size={16} className="text-gray-600" />
           </button>
         </div>
 
@@ -80,7 +83,7 @@ export default function LoginModal({ onClose }) {
 
             <button
               onClick={googleLogin}
-              className="w-full flex items-center justify-center gap-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200 py-3 rounded-xl font-medium hover:bg-gray-50 dark:hover:bg-gray-700 transition-all active:scale-95 mb-4"
+              className="w-full flex items-center justify-center gap-3 bg-white border border-gray-200 text-gray-700 py-3 rounded-xl font-medium hover:bg-gray-50 transition-all active:scale-95 mb-4"
             >
               <svg className="w-5 h-5" viewBox="0 0 24 24">
                 <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
@@ -93,7 +96,9 @@ export default function LoginModal({ onClose }) {
 
             <div className="flex items-center gap-3 my-4">
               <div className="flex-1 h-px bg-gray-200 dark:bg-gray-700" />
-              <span className="text-xs text-gray-400 uppercase">or</span>
+              <span className="text-[10px] text-gray-400 uppercase">
+                or continue with email
+              </span>
               <div className="flex-1 h-px bg-gray-200 dark:bg-gray-700" />
             </div>
 

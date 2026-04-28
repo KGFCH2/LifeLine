@@ -1,9 +1,25 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useAuth } from '../context/AuthContext.jsx'
 import LoginModal from '../components/LoginModal.jsx'
-import { Stethoscope, Star, Phone, Filter, Calendar, ChevronRight, X, CheckCircle } from 'lucide-react'
+import { Stethoscope, Star, Phone, Calendar, X, CheckCircle, MapPin, Clock, Search, Loader2 } from 'lucide-react'
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000'
+
+const specialties = ['All', 'Cardiologist', 'Orthopedic', 'General Physician', 'Pediatrician', 'Neurologist', 'Emergency Medicine']
+
+const SPECIALTY_COLORS = {
+  'Cardiologist': { bg: 'bg-red-50', text: 'text-[#C8102E]', dot: 'bg-[#C8102E]' },
+  'Orthopedic': { bg: 'bg-blue-50', text: 'text-blue-700', dot: 'bg-blue-600' },
+  'General Physician': { bg: 'bg-emerald-50', text: 'text-emerald-700', dot: 'bg-emerald-600' },
+  'Pediatrician': { bg: 'bg-violet-50', text: 'text-violet-700', dot: 'bg-violet-600' },
+  'Neurologist': { bg: 'bg-amber-50', text: 'text-amber-700', dot: 'bg-amber-600' },
+  'Emergency Medicine': { bg: 'bg-red-50', text: 'text-red-700', dot: 'bg-red-600' },
+}
+
+const AVATAR_COLORS = [
+  'bg-[#C8102E]', 'bg-blue-600', 'bg-emerald-600',
+  'bg-violet-600', 'bg-amber-600', 'bg-rose-700',
+]
 
 export default function Doctors() {
   const { user } = useAuth()
@@ -17,6 +33,7 @@ export default function Doctors() {
   const [selectedSlot, setSelectedSlot] = useState(null)
   const [bookingSuccess, setBookingSuccess] = useState(false)
   const [patientForm, setPatientForm] = useState({ name: '', contact: '', reason: '' })
+  const [searchQuery, setSearchQuery] = useState('')
 
   useEffect(() => {
     if (!user) { setShowLogin(true); return }
@@ -70,127 +87,244 @@ export default function Doctors() {
       const data = await res.json()
       if (data.status === 'confirmed') {
         setBookingSuccess(true)
-        setTimeout(() => { setBookingSuccess(false); setSelectedDoctor(null); setSelectedSlot(null) }, 3000)
+        setTimeout(() => {
+          setBookingSuccess(false); setSelectedDoctor(null); setSelectedSlot(null)
+          setPatientForm({ name: '', contact: '', reason: '' })
+        }, 3000)
       }
     } catch (e) {}
     setLoading(false)
   }
 
-  const specialties = ['All', 'Cardiologist', 'Orthopedic', 'General Physician', 'Pediatrician', 'Neurologist', 'Emergency Medicine']
+  const filteredDoctors = doctors.filter(d =>
+    !searchQuery ||
+    d.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    d.specialty?.toLowerCase().includes(searchQuery.toLowerCase())
+  )
 
   if (!user) return showLogin ? <LoginModal onClose={() => setShowLogin(false)} /> : null
 
   return (
-    <div className="pb-24">
-      <div className="bg-white dark:bg-gray-900 border-b border-gray-100 dark:border-gray-800 p-4">
-        <h1 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
-          <Stethoscope size={22} className="text-red-500" /> Doctors
-        </h1>
-        <p className="text-sm text-gray-500 mt-1">Book appointments with nearby specialists</p>
-      </div>
+    <div className="bg-gray-50 min-h-screen pb-24" style={{ fontFamily: "'Inter', sans-serif" }}>
 
-      <div className="px-4 mt-3">
-        <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1">
-          {specialties.map(s => (
-            <button key={s} onClick={() => setSpecialty(s === 'All' ? '' : s)}
-              className={`px-4 py-2 rounded-xl text-sm font-medium whitespace-nowrap transition-all active:scale-95 ${
-                (s === 'All' && !specialty) || specialty === s ? 'bg-red-600 text-white shadow-md' : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 shadow-sm'
-              }`}>
-              {s}
-            </button>
-          ))}
+      {/* Page Header */}
+      <div className="bg-white border-b border-gray-100 px-4 sm:px-8 pt-8 pb-5">
+        <div className="max-w-4xl mx-auto">
+          <div className="flex items-end justify-between mb-5">
+            <div>
+              <p className="text-xs font-medium text-[#C8102E] mb-1" style={{ fontFamily: "'JetBrains Mono', monospace" }}>SPECIALISTS</p>
+              <h1 className="text-2xl font-extrabold text-gray-900">Find a Doctor</h1>
+              <p className="text-sm text-gray-400 mt-0.5">Book appointments with verified specialists near you</p>
+            </div>
+            <Stethoscope size={28} className="text-gray-200 mb-1" />
+          </div>
+
+          {/* Search */}
+          <div className="relative">
+            <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Search by name or specialty..."
+              value={searchQuery}
+              onChange={e => setSearchQuery(e.target.value)}
+              className="w-full pl-10 pr-4 py-2.5 text-sm bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#C8102E]/20 focus:border-[#C8102E]/40 transition-all"
+            />
+          </div>
         </div>
       </div>
 
-      <div className="px-4 mt-4 space-y-3">
+      {/* Specialty filter pills */}
+      <div className="bg-white border-b border-gray-100 px-4 sm:px-8 py-3 sticky top-14 z-10">
+        <div className="max-w-4xl mx-auto flex gap-2 overflow-x-auto no-scrollbar">
+          {specialties.map(s => {
+            const active = (s === 'All' && !specialty) || specialty === s
+            return (
+              <button
+                key={s}
+                onClick={() => setSpecialty(s === 'All' ? '' : s)}
+                className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all active:scale-95 ${
+                  active
+                    ? 'bg-[#C8102E] text-white shadow-sm'
+                    : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+                }`}
+                style={{ fontFamily: "'JetBrains Mono', monospace" }}
+              >
+                {s}
+              </button>
+            )
+          })}
+        </div>
+      </div>
+
+      {/* Doctors Grid */}
+      <div className="px-4 sm:px-8 pt-5 max-w-4xl mx-auto">
         {loading && (
-          <div className="flex items-center justify-center py-12">
-            <div className="w-8 h-8 border-4 border-red-500 border-t-transparent rounded-full animate-spin" />
+          <div className="flex flex-col items-center justify-center py-20 gap-3">
+            <Loader2 size={28} className="animate-spin text-[#C8102E]" />
+            <p className="text-sm text-gray-400">Finding specialists near you...</p>
           </div>
         )}
 
-        {doctors.map(doc => (
-          <div key={doc.id} className="card hover:shadow-md transition-shadow">
-            <div className="flex gap-4">
-              <div className="w-14 h-14 bg-red-50 dark:bg-red-900/20 rounded-xl flex items-center justify-center shrink-0">
-                <Stethoscope size={26} className="text-red-600" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <h3 className="font-semibold text-gray-900 dark:text-white text-sm">{doc.name}</h3>
-                <p className="text-xs text-red-600 font-medium">{doc.specialty}</p>
-                <p className="text-xs text-gray-500 mt-0.5">{doc.hospital} - {doc.experience}</p>
-                <div className="flex items-center gap-3 mt-2">
-                  <span className="flex items-center gap-1 text-xs text-amber-600 font-medium">
-                    <Star size={12} fill="currentColor" /> {doc.rating}
-                  </span>
-                  <span className="text-xs text-gray-500">{doc.fee}</span>
-                  <span className={`text-xs px-2 py-0.5 rounded-full ${doc.availableToday ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
-                    {doc.availableToday ? 'Available' : 'Unavailable'}
-                  </span>
-                </div>
-              </div>
-            </div>
-            <div className="flex gap-2 mt-3">
-              <a href={doc.phone ? `tel:${doc.phone}` : undefined} className="btn-secondary flex-1 flex items-center justify-center gap-2 text-sm py-2.5">
-                <Phone size={16} /> Call
-              </a>
-              <button onClick={() => { setSelectedDoctor(doc); fetchSlots(doc.id) }} className="btn-primary flex-[2] flex items-center justify-center gap-2 text-sm py-2.5">
-                <Calendar size={16} /> Book
-              </button>
-            </div>
-          </div>
-        ))}
+        {!loading && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {filteredDoctors.map((doc, idx) => {
+              const avatarColor = AVATAR_COLORS[idx % AVATAR_COLORS.length]
+              const specStyle = SPECIALTY_COLORS[doc.specialty] || { bg: 'bg-gray-100', text: 'text-gray-600', dot: 'bg-gray-400' }
+              const initials = doc.name?.split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase() || 'DR'
 
-        {doctors.length === 0 && !loading && (
-          <div className="text-center py-12">
-            <Stethoscope size={40} className="mx-auto text-gray-300 mb-3" />
-            <p className="text-gray-500 text-sm">No doctors found. Try adjusting filters.</p>
+              return (
+                <div
+                  key={doc.id}
+                  className="bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 overflow-hidden"
+                >
+                  <div className="p-4 flex items-start gap-4">
+                    {/* Avatar */}
+                    <div className={`w-14 h-14 rounded-xl ${avatarColor} flex items-center justify-center text-white font-black text-xl shrink-0 shadow-sm`}>
+                      {initials}
+                    </div>
+
+                    {/* Info */}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-start justify-between gap-2">
+                        <div>
+                          <h3 className="font-bold text-gray-900 text-sm">{doc.name}</h3>
+                          <div className={`inline-flex items-center gap-1 mt-1 px-2 py-0.5 rounded-md ${specStyle.bg}`}>
+                            <span className={`w-1.5 h-1.5 rounded-full ${specStyle.dot}`} />
+                            <span className={`text-[10px] font-semibold ${specStyle.text}`} style={{ fontFamily: "'JetBrains Mono', monospace" }}>{doc.specialty}</span>
+                          </div>
+                        </div>
+                        <span className={`shrink-0 text-[10px] font-semibold px-2 py-0.5 rounded-md ${doc.availableToday ? 'bg-emerald-50 text-emerald-700' : 'bg-gray-100 text-gray-400'}`}>
+                          {doc.availableToday ? '● Today' : '○ Busy'}
+                        </span>
+                      </div>
+
+                      <p className="text-[11px] text-gray-400 mt-1.5">{doc.hospital}</p>
+
+                      <div className="flex items-center gap-3 mt-2">
+                        <div className="flex items-center gap-0.5">
+                          <Star size={10} fill="#f59e0b" className="text-amber-400" />
+                          <span className="text-xs font-bold text-gray-700 ml-0.5">{doc.rating}</span>
+                        </div>
+                        <div className="flex items-center gap-1 text-[10px] text-gray-400">
+                          <Clock size={9} />
+                          {doc.experience}
+                        </div>
+                        {doc.distance && (
+                          <div className="flex items-center gap-1 text-[10px] text-gray-400">
+                            <MapPin size={9} />
+                            {typeof doc.distance === 'number' ? `${doc.distance.toFixed(1)}km` : doc.distance}
+                          </div>
+                        )}
+                        <span className="text-xs font-extrabold text-gray-900 ml-auto">{doc.fee}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Actions */}
+                  <div className="px-4 pb-4 flex gap-2">
+                    {doc.phone && (
+                      <a
+                        href={`tel:${doc.phone}`}
+                        className="flex-1 flex items-center justify-center gap-1.5 bg-gray-50 border border-gray-200 text-gray-600 font-semibold py-2.5 rounded-lg text-xs transition-all hover:bg-gray-100 active:scale-95"
+                      >
+                        <Phone size={13} /> Call
+                      </a>
+                    )}
+                    <button
+                      onClick={() => { setSelectedDoctor(doc); fetchSlots(doc.id) }}
+                      className="flex-[2] flex items-center justify-center gap-1.5 bg-[#C8102E] hover:bg-[#a50d26] text-white font-bold py-2.5 rounded-lg text-xs transition-all active:scale-95 shadow-sm"
+                    >
+                      <Calendar size={13} /> Book Appointment
+                    </button>
+                  </div>
+                </div>
+              )
+            })}
+
+            {filteredDoctors.length === 0 && !loading && (
+              <div className="col-span-2 text-center py-16 bg-white rounded-2xl border border-gray-100">
+                <Stethoscope size={32} className="mx-auto text-gray-200 mb-3" />
+                <p className="text-gray-400 text-sm font-medium">No doctors found</p>
+                <p className="text-gray-300 text-xs mt-1">Try adjusting your filters</p>
+              </div>
+            )}
           </div>
         )}
       </div>
 
       {/* Booking Modal */}
       {selectedDoctor && (
-        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 backdrop-blur-sm">
-          <div className="bg-white dark:bg-gray-900 w-full sm:w-[420px] sm:rounded-2xl rounded-t-2xl p-6 shadow-2xl animate-slide-up max-h-[85vh] overflow-y-auto">
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40 backdrop-blur-sm">
+          <div className="bg-white w-full sm:w-[420px] sm:rounded-2xl rounded-t-2xl shadow-2xl max-h-[88vh] overflow-y-auto border border-gray-100">
             {bookingSuccess ? (
-              <div className="text-center py-8">
-                <CheckCircle size={48} className="mx-auto text-green-500 mb-3" />
-                <h2 className="font-bold text-lg text-gray-900 dark:text-white">Confirmed!</h2>
-                <p className="text-sm text-gray-500 mt-1">See you on time.</p>
+              <div className="p-10 text-center">
+                <div className="w-16 h-16 bg-emerald-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <CheckCircle size={32} className="text-emerald-500" />
+                </div>
+                <h2 className="font-extrabold text-xl text-gray-900 mb-1">Confirmed!</h2>
+                <p className="text-sm text-gray-400">Appointment booked successfully.</p>
               </div>
             ) : (
-              <>
-                <div className="flex items-center justify-between mb-4">
-                  <h2 className="font-bold text-gray-900 dark:text-white">Book: {selectedDoctor.name}</h2>
-                  <button onClick={() => setSelectedDoctor(null)} className="p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg"><X size={20} className="text-gray-500" /></button>
-                </div>
-
-                <div className="mb-4">
-                  <label className="text-xs font-medium text-gray-500 mb-2 block">Select Slot</label>
-                  <div className="grid grid-cols-3 gap-2">
-                    {slots.map(s => (
-                      <button key={s.time} onClick={() => s.available && setSelectedSlot(s.time)} disabled={!s.available}
-                        className={`py-2 rounded-xl text-xs font-medium transition-all ${
-                          selectedSlot === s.time ? 'bg-red-600 text-white shadow-md' : s.available ? 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:bg-gray-200' : 'bg-gray-50 dark:bg-gray-800 text-gray-300 line-through cursor-not-allowed'
-                        }`}>
-                        {s.time}
-                      </button>
-                    ))}
+              <div className="p-5">
+                <div className="flex items-start justify-between mb-5">
+                  <div>
+                    <h2 className="font-extrabold text-gray-900">Book Appointment</h2>
+                    <p className="text-xs text-gray-400 mt-0.5" style={{ fontFamily: "'JetBrains Mono', monospace" }}>
+                      {selectedDoctor.name} · {selectedDoctor.specialty}
+                    </p>
                   </div>
+                  <button
+                    onClick={() => { setSelectedDoctor(null); setSelectedSlot(null) }}
+                    className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center hover:bg-gray-200 transition-all"
+                  >
+                    <X size={15} className="text-gray-600" />
+                  </button>
                 </div>
 
-                <div className="space-y-3">
-                  <input className="input-field" placeholder="Patient Name" value={patientForm.name} onChange={e => setPatientForm(f => ({ ...f, name: e.target.value }))} />
-                  <input className="input-field" placeholder="Contact" value={patientForm.contact} onChange={e => setPatientForm(f => ({ ...f, contact: e.target.value }))} />
-                  <input className="input-field" placeholder="Reason for visit" value={patientForm.reason} onChange={e => setPatientForm(f => ({ ...f, reason: e.target.value }))} />
+                {/* Slot picker */}
+                <div className="mb-5">
+                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-3" style={{ fontFamily: "'JetBrains Mono', monospace" }}>Available Slots</p>
+                  {slots.length === 0 ? (
+                    <div className="text-center py-6 text-sm text-gray-300">Loading slots...</div>
+                  ) : (
+                    <div className="grid grid-cols-4 gap-2">
+                      {slots.map(s => (
+                        <button
+                          key={s.time}
+                          onClick={() => s.available && setSelectedSlot(s.time)}
+                          disabled={!s.available}
+                          className={`py-2 rounded-lg text-xs font-semibold transition-all ${
+                            selectedSlot === s.time
+                              ? 'bg-[#C8102E] text-white shadow-sm'
+                              : s.available
+                              ? 'bg-gray-50 border border-gray-200 text-gray-600 hover:border-[#C8102E]/30'
+                              : 'bg-gray-50 text-gray-200 line-through cursor-not-allowed'
+                          }`}
+                        >
+                          {s.time}
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
 
-                <button onClick={bookAppointment} disabled={!selectedSlot || loading} className="btn-primary w-full mt-4 flex items-center justify-center gap-2">
-                  <Calendar size={18} />
-                  {loading ? 'Booking...' : `Confirm at ${selectedSlot || '...'}`}
+                {/* Patient details */}
+                <div className="space-y-3 mb-5">
+                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest" style={{ fontFamily: "'JetBrains Mono', monospace" }}>Patient Details</p>
+                  <input className="input-field text-sm" placeholder="Patient Name" value={patientForm.name} onChange={e => setPatientForm(f => ({ ...f, name: e.target.value }))} />
+                  <input className="input-field text-sm" placeholder="Contact Number" value={patientForm.contact} onChange={e => setPatientForm(f => ({ ...f, contact: e.target.value }))} />
+                  <input className="input-field text-sm" placeholder="Reason for visit" value={patientForm.reason} onChange={e => setPatientForm(f => ({ ...f, reason: e.target.value }))} />
+                </div>
+
+                <button
+                  onClick={bookAppointment}
+                  disabled={!selectedSlot || loading}
+                  className="w-full bg-[#C8102E] hover:bg-[#a50d26] disabled:opacity-50 text-white font-bold py-3.5 rounded-xl flex items-center justify-center gap-2 transition-all active:scale-95 shadow-sm"
+                >
+                  {loading ? <Loader2 size={16} className="animate-spin" /> : <Calendar size={16} />}
+                  {loading ? 'Booking...' : selectedSlot ? `Confirm at ${selectedSlot}` : 'Select a slot'}
                 </button>
-              </>
+              </div>
             )}
           </div>
         </div>

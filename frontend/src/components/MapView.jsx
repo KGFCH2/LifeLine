@@ -1,178 +1,99 @@
-import { useEffect, useRef, useState, useCallback } from 'react'
-import { Map, Layers, Navigation, Compass, ZoomIn, ZoomOut } from 'lucide-react'
+import { useEffect, useRef, useState } from 'react'
+import { Compass, ZoomIn, ZoomOut, Layers, Navigation } from 'lucide-react'
 import { loadGoogleMaps } from '../lib/googleMaps.js'
 
-const MAP_STYLES = {
-  light: [],
-  dark: [
-    { elementType: 'geometry', stylers: [{ color: '#212121' }] },
-    { elementType: 'labels.icon', stylers: [{ visibility: 'off' }] },
-    { elementType: 'labels.text.fill', stylers: [{ color: '#757575' }] },
-    { elementType: 'labels.text.stroke', stylers: [{ color: '#212121' }] },
-    { featureType: 'administrative', elementType: 'geometry', stylers: [{ color: '#757575' }] },
-    { featureType: 'administrative.country', elementType: 'labels.text.fill', stylers: [{ color: '#9e9e9e' }] },
-    { featureType: 'administrative.land_parcel', stylers: [{ visibility: 'off' }] },
-    { featureType: 'administrative.locality', elementType: 'labels.text.fill', stylers: [{ color: '#bdbdbd' }] },
-    { featureType: 'poi', elementType: 'labels.text.fill', stylers: [{ color: '#757575' }] },
-    { featureType: 'poi.park', elementType: 'geometry', stylers: [{ color: '#181818' }] },
-    { featureType: 'poi.park', elementType: 'labels.text.fill', stylers: [{ color: '#616161' }] },
-    { featureType: 'poi.park', elementType: 'labels.text.stroke', stylers: [{ color: '#1b1b1b' }] },
-    { featureType: 'road', elementType: 'geometry.fill', stylers: [{ color: '#2c2c2c' }] },
-    { featureType: 'road', elementType: 'labels.text.fill', stylers: [{ color: '#8a8a8a' }] },
-    { featureType: 'road.arterial', elementType: 'geometry', stylers: [{ color: '#373737' }] },
-    { featureType: 'road.highway', elementType: 'geometry', stylers: [{ color: '#3c3c3c' }] },
-    { featureType: 'road.highway.controlled_access', elementType: 'geometry', stylers: [{ color: '#4e4e4e' }] },
-    { featureType: 'road.local', elementType: 'labels.text.fill', stylers: [{ color: '#616161' }] },
-    { featureType: 'transit', elementType: 'labels.text.fill', stylers: [{ color: '#757575' }] },
-    { featureType: 'water', elementType: 'geometry', stylers: [{ color: '#000000' }] },
-    { featureType: 'water', elementType: 'labels.text.fill', stylers: [{ color: '#3d3d3d' }] }
-  ]
-}
-
-function getAmbulance3DIcon() {
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="56" height="56" viewBox="0 0 56 56">
-    <defs>
-      <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
-        <feDropShadow dx="0" dy="3" stdDeviation="3" flood-color="#000" flood-opacity="0.25"/>
-      </filter>
-      <linearGradient id="bodyGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-        <stop offset="0%" stop-color="#ffffff"/>
-        <stop offset="100%" stop-color="#f0f0f0"/>
-      </linearGradient>
-      <linearGradient id="windowGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-        <stop offset="0%" stop-color="#87CEEB"/>
-        <stop offset="100%" stop-color="#5F9EA0"/>
-      </linearGradient>
-    </defs>
-    <g filter="url(#shadow)">
-      <!-- Shadow ellipse -->
-      <ellipse cx="28" cy="48" rx="20" ry="5" fill="#000000" opacity="0.15"/>
-      <!-- Vehicle body - 3D perspective -->
-      <path d="M14 22 L14 38 Q14 42 18 42 L38 42 Q42 42 42 38 L42 22 Q42 18 38 18 L18 18 Q14 18 14 22Z" fill="url(#bodyGrad)" stroke="#e5e5e5" stroke-width="1"/>
-      <!-- Roof -->
-      <path d="M16 18 L18 12 L38 12 L40 18Z" fill="#f8f8f8" stroke="#ddd" stroke-width="1"/>
-      <!-- Windshield -->
-      <path d="M40 20 L42 22 L42 28 L38 28 L38 20Z" fill="url(#windowGrad)" stroke="#4a90a4" stroke-width="0.5"/>
-      <!-- Side window -->
-      <rect x="20" y="20" width="12" height="8" rx="1" fill="url(#windowGrad)" stroke="#4a90a4" stroke-width="0.5"/>
-      <!-- Red cross on side -->
-      <g transform="translate(28, 34)">
-        <rect x="-6" y="-2" width="12" height="4" rx="1" fill="#ef4444"/>
-        <rect x="-2" y="-6" width="4" height="12" rx="1" fill="#ef4444"/>
-      </g>
-      <!-- Emergency light bar -->
-      <rect x="18" y="8" width="20" height="4" rx="2" fill="#3b82f6" opacity="0.9"/>
-      <rect x="20" y="8" width="6" height="4" rx="1" fill="#60a5fa" opacity="0.7"/>
-      <rect x="30" y="8" width="6" height="4" rx="1" fill="#ef4444" opacity="0.7"/>
-      <!-- Wheels -->
-      <circle cx="18" cy="44" r="4" fill="#333"/>
-      <circle cx="38" cy="44" r="4" fill="#333"/>
-      <circle cx="18" cy="44" r="2" fill="#666"/>
-      <circle cx="38" cy="44" r="2" fill="#666"/>
-      <!-- Headlight -->
-      <ellipse cx="41" cy="32" rx="2" ry="3" fill="#fbbf24" opacity="0.8"/>
-    </g>
+// ── SVG marker icons ───────────────────────────────────────────────────────
+function makePin(fillColor, strokeColor, label) {
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="40" height="52" viewBox="0 0 40 52">
+    <filter id="s"><feDropShadow dx="0" dy="2" stdDeviation="2" flood-opacity="0.25"/></filter>
+    <path d="M20 2C10.06 2 2 10.06 2 20c0 13 18 30 18 30s18-17 18-30C38 10.06 29.94 2 20 2z" fill="${fillColor}" stroke="${strokeColor}" stroke-width="2" filter="url(#s)"/>
+    <text x="20" y="25" text-anchor="middle" font-size="12" font-weight="bold" fill="white" font-family="sans-serif">${label}</text>
   </svg>`
   return {
     url: `data:image/svg+xml,${encodeURIComponent(svg)}`,
-    scaledSize: new window.google.maps.Size(56, 56),
-    anchor: new window.google.maps.Point(28, 48)
+    scaledSize: new window.google.maps.Size(40, 52),
+    anchor: new window.google.maps.Point(20, 50),
   }
 }
 
-function getHospitalMarkerIcon() {
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 40 40">
-    <circle cx="20" cy="20" r="18" fill="white" stroke="#ef4444" stroke-width="2"/>
-    <circle cx="20" cy="20" r="14" fill="#ef4444"/>
-    <path d="M20 12 L20 28 M12 20 L28 20" stroke="white" stroke-width="4" stroke-linecap="round"/>
+function getUserDotIcon() {
+  // Pulsing blue dot for "You are here"
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48">
+    <circle cx="24" cy="24" r="22" fill="#3b82f6" fill-opacity="0.15"/>
+    <circle cx="24" cy="24" r="14" fill="#3b82f6" stroke="white" stroke-width="3"/>
+    <circle cx="24" cy="24" r="5" fill="white"/>
   </svg>`
   return {
     url: `data:image/svg+xml,${encodeURIComponent(svg)}`,
     scaledSize: new window.google.maps.Size(40, 40),
-    anchor: new window.google.maps.Point(20, 20)
+    anchor: new window.google.maps.Point(20, 20),
   }
 }
 
-function getPoliceMarkerIcon() {
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 40 40">
-    <circle cx="20" cy="20" r="18" fill="white" stroke="#3b82f6" stroke-width="2"/>
-    <circle cx="20" cy="20" r="14" fill="#3b82f6"/>
-    <path d="M20 12 L26 18 L26 28 L14 28 L14 18 Z" fill="white"/>
+function getHospitalPinIcon() {
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="44" height="56" viewBox="0 0 44 56">
+    <filter id="sh"><feDropShadow dx="0" dy="3" stdDeviation="3" flood-opacity="0.3"/></filter>
+    <path d="M22 2C10.4 2 1 11.4 1 23c0 14.4 21 31 21 31s21-16.6 21-31C43 11.4 33.6 2 22 2z" fill="#C8102E" filter="url(#sh)"/>
+    <circle cx="22" cy="22" r="14" fill="white" opacity="0.95"/>
+    <rect x="18" y="14" width="8" height="16" rx="2" fill="#C8102E"/>
+    <rect x="14" y="18" width="16" height="8" rx="2" fill="#C8102E"/>
   </svg>`
   return {
     url: `data:image/svg+xml,${encodeURIComponent(svg)}`,
-    scaledSize: new window.google.maps.Size(40, 40),
-    anchor: new window.google.maps.Point(20, 20)
+    scaledSize: new window.google.maps.Size(44, 56),
+    anchor: new window.google.maps.Point(22, 54),
   }
 }
 
-function getDoctorMarkerIcon() {
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 40 40">
-    <circle cx="20" cy="20" r="18" fill="white" stroke="#f59e0b" stroke-width="2"/>
-    <circle cx="20" cy="20" r="14" fill="#f59e0b"/>
-    <circle cx="20" cy="16" r="4" fill="white"/>
-    <path d="M14 26 Q20 30 26 26" stroke="white" stroke-width="3" fill="none"/>
+function getAmbulanceIcon() {
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="52" height="52" viewBox="0 0 52 52">
+    <filter id="amb"><feDropShadow dx="0" dy="2" stdDeviation="3" flood-opacity="0.25"/></filter>
+    <rect x="4" y="12" width="44" height="28" rx="6" fill="#fff" stroke="#e5e7eb" stroke-width="1.5" filter="url(#amb)"/>
+    <rect x="4" y="10" width="44" height="6" rx="3" fill="#3b82f6" opacity="0.9"/>
+    <rect x="6" y="10" width="10" height="6" fill="#60a5fa" opacity="0.8"/>
+    <rect x="32" y="10" width="10" height="6" fill="#ef4444" opacity="0.8"/>
+    <rect x="18" y="22" width="16" height="4" rx="1" fill="#C8102E"/>
+    <rect x="24" y="18" width="4" height="12" rx="1" fill="#C8102E"/>
+    <circle cx="12" cy="42" r="5" fill="#1f2937"/>
+    <circle cx="40" cy="42" r="5" fill="#1f2937"/>
+    <circle cx="12" cy="42" r="2.5" fill="#4b5563"/>
+    <circle cx="40" cy="42" r="2.5" fill="#4b5563"/>
+    <rect x="40" y="20" width="8" height="12" rx="2" fill="#87ceeb" opacity="0.8"/>
   </svg>`
   return {
     url: `data:image/svg+xml,${encodeURIComponent(svg)}`,
-    scaledSize: new window.google.maps.Size(40, 40),
-    anchor: new window.google.maps.Point(20, 20)
+    scaledSize: new window.google.maps.Size(52, 52),
+    anchor: new window.google.maps.Point(26, 48),
   }
 }
 
-function getPharmacyMarkerIcon() {
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 40 40">
-    <circle cx="20" cy="20" r="18" fill="white" stroke="#22c55e" stroke-width="2"/>
-    <circle cx="20" cy="20" r="14" fill="#22c55e"/>
-    <rect x="14" y="18" width="12" height="4" rx="1" fill="white"/>
-  </svg>`
-  return {
-    url: `data:image/svg+xml,${encodeURIComponent(svg)}`,
-    scaledSize: new window.google.maps.Size(40, 40),
-    anchor: new window.google.maps.Point(20, 20)
-  }
-}
-
-function getUserAvatarIcon(name = 'You') {
-  const initial = name.charAt(0).toUpperCase()
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="48" height="60" viewBox="0 0 48 60">
-    <defs>
-      <filter id="userShadow" x="-50%" y="-50%" width="200%" height="200%">
-        <feDropShadow dx="0" dy="2" stdDeviation="3" flood-opacity="0.3"/>
-      </filter>
-      <linearGradient id="avatarGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-        <stop offset="0%" stop-color="#3b82f6"/>
-        <stop offset="100%" stop-color="#2563eb"/>
-      </linearGradient>
-    </defs>
-    <!-- Pin shape -->
-    <path d="M24 4C12.95 4 4 12.95 4 24c0 15 20 32 20 32s20-17 20-32C44 12.95 35.05 4 24 4z" fill="url(#avatarGrad)" filter="url(#userShadow)"/>
-    <!-- Avatar circle -->
-    <circle cx="24" cy="22" r="14" fill="#ffffff"/>
-    <!-- User icon -->
-    <circle cx="24" cy="18" r="5" fill="#3b82f6"/>
-    <path d="M15 30c0-5 4-9 9-9s9 4 9 9" stroke="#3b82f6" stroke-width="2" fill="none"/>
-    <!-- Initial text -->
-    <text x="24" y="42" text-anchor="middle" font-size="10" font-weight="bold" fill="#ffffff">${initial}</text>
-  </svg>`
-  return {
-    url: `data:image/svg+xml,${encodeURIComponent(svg)}`,
-    scaledSize: new window.google.maps.Size(48, 60),
-    anchor: new window.google.maps.Point(24, 52)
-  }
-}
+// ─────────────────────────────────────────────────────────────────────────────
+// Light-mode clean map style
+const LIGHT_STYLE = [
+  { elementType: 'geometry', stylers: [{ color: '#f8f9fa' }] },
+  { featureType: 'road', elementType: 'geometry.fill', stylers: [{ color: '#ffffff' }] },
+  { featureType: 'road', elementType: 'geometry.stroke', stylers: [{ color: '#e8eaed' }] },
+  { featureType: 'road.highway', elementType: 'geometry.fill', stylers: [{ color: '#ffffff' }] },
+  { featureType: 'road.highway', elementType: 'geometry.stroke', stylers: [{ color: '#dadce0' }] },
+  { featureType: 'water', elementType: 'geometry', stylers: [{ color: '#c8e6f5' }] },
+  { featureType: 'poi', stylers: [{ visibility: 'off' }] },
+  { featureType: 'poi.medical', stylers: [{ visibility: 'on' }] },
+  { featureType: 'transit', stylers: [{ visibility: 'simplified' }] },
+  { featureType: 'landscape.natural', elementType: 'geometry', stylers: [{ color: '#eef1ea' }] },
+  { elementType: 'labels.text.fill', stylers: [{ color: '#374151' }] },
+  { elementType: 'labels.text.stroke', stylers: [{ color: '#ffffff' }] },
+]
 
 export default function MapView({
-  center,
-  markers = [],
+  center,           // initial center — only used once on mount
+  markers = [],     // [{ position, title, type, bounce, info }] — type: 'user'|'hospital'|'ambulance'
   routes = [],
   activeRoute = null,
   traffic = false,
-  darkMode = false,
   height = '100%',
   onMapClick,
-  userLocation,
-  zoom = 14,
+  userLocation,     // live user position — for recenter button only
+  zoom = 15,
   show3D = false,
   onToggle3D,
   demoMode = false,
@@ -180,328 +101,343 @@ export default function MapView({
   demoAmbulancePos = null,
   demoProgress = 0,
   userAvatar = null,
-  markerType = 'hospital'
+  onRefreshLocation,
 }) {
-  const mapRef = useRef(null)
   const containerRef = useRef(null)
-  const [mapLoaded, setMapLoaded] = useState(false)
-  const [mapError, setMapError] = useState('')
+  const mapRef = useRef(null)         
+  const initializedRef = useRef(false)  
   const markersRef = useRef([])
   const userMarkerRef = useRef(null)
   const routeLinesRef = useRef([])
   const trafficLayerRef = useRef(null)
   const demoPathRef = useRef(null)
   const demoMarkerRef = useRef(null)
-  const demoUserRingRef = useRef(null)
   const avatarMarkerRef = useRef(null)
+  const infoWindowsRef = useRef([])     // track open info windows
 
-  const initMap = useCallback(() => {
-    if (!containerRef.current || !window.google) return
+  const [mapLoaded, setMapLoaded] = useState(false)
+  const [mapError, setMapError] = useState('')
 
-    if (mapRef.current) {
-      if (center) mapRef.current.panTo(center)
-      mapRef.current.setZoom(zoom)
-      return
-    }
-
-    const map = new window.google.maps.Map(containerRef.current, {
-      center: center || { lat: 22.5726, lng: 88.3639 },
-      zoom,
-      mapTypeId: show3D ? 'satellite' : 'roadmap',
-      tilt: show3D ? 45 : 0,
-      heading: 0,
-      styles: darkMode ? MAP_STYLES.dark : MAP_STYLES.light,
-      mapTypeControl: false,
-      fullscreenControl: false,
-      streetViewControl: false,
-      zoomControl: false,
-      gestureHandling: 'greedy'
-    })
-
-    mapRef.current = map
-    setMapLoaded(true)
-
-    if (traffic) {
-      trafficLayerRef.current = new window.google.maps.TrafficLayer()
-      trafficLayerRef.current.setMap(map)
-    }
-
-    if (onMapClick) {
-      map.addListener('click', (e) => onMapClick({ lat: e.latLng.lat(), lng: e.latLng.lng() }))
-    }
-  }, [center, zoom, darkMode, show3D, traffic, onMapClick])
-
+  // ── INIT — runs once ────────────────────────────────────────────────────
   useEffect(() => {
+    if (initializedRef.current || !containerRef.current) return
     let cancelled = false
+
     loadGoogleMaps()
       .then(() => {
-        if (!cancelled) initMap()
+        if (cancelled || !containerRef.current || initializedRef.current) return
+        initializedRef.current = true
+
+        const initialCenter = center || { lat: 22.5726, lng: 88.3639 }
+
+        const map = new window.google.maps.Map(containerRef.current, {
+          center: initialCenter,
+          zoom,
+          mapTypeId: 'roadmap',
+          styles: LIGHT_STYLE,
+          mapTypeControl: false,
+          fullscreenControl: false,
+          streetViewControl: false,
+          zoomControl: false,
+          gestureHandling: 'greedy',
+          clickableIcons: false,
+        })
+
+        mapRef.current = map
+        setMapLoaded(true)
+
+        if (onMapClick) {
+          map.addListener('click', (e) => {
+            onMapClick({ lat: e.latLng.lat(), lng: e.latLng.lng() })
+          })
+        }
       })
-      .catch(error => setMapError(error.message || 'Unable to load Google Maps'))
+      .catch(err => {
+        if (!cancelled) setMapError(err.message || 'Unable to load Google Maps')
+      })
 
     return () => { cancelled = true }
-  }, [initMap])
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
+  // ── Only pan to center when it changes meaningfully (user + hospital fit) ─
+  const prevCenterRef = useRef(null)
   useEffect(() => {
-    if (mapRef.current && center) mapRef.current.panTo(center)
-  }, [center])
+    if (!mapRef.current || !center) return
+    const prev = prevCenterRef.current
+    const changed = !prev || Math.abs(prev.lat - center.lat) > 0.0005 || Math.abs(prev.lng - center.lng) > 0.0005
+    if (!changed) return
+    prevCenterRef.current = center
+    // Only auto-pan during initial load phase, not during constant GPS ticks
+    if (!mapLoaded) return
+    mapRef.current.panTo(center)
+  }, [center, mapLoaded])
 
-  // Get illustrated icon based on marker type
-  const getMarkerIcon = (type) => {
-    switch(type) {
-      case 'hospital': return getHospitalMarkerIcon()
-      case 'police': return getPoliceMarkerIcon()
-      case 'doctor': return getDoctorMarkerIcon()
-      case 'pharmacy': return getPharmacyMarkerIcon()
-      default: return getHospitalMarkerIcon()
+  // ── Traffic layer ───────────────────────────────────────────────────────
+  useEffect(() => {
+    if (!mapRef.current || !mapLoaded) return
+    if (!trafficLayerRef.current) {
+      trafficLayerRef.current = new window.google.maps.TrafficLayer()
     }
-  }
+    trafficLayerRef.current.setMap(traffic ? mapRef.current : null)
+  }, [traffic, mapLoaded])
 
+  // ── 3D / style toggle ───────────────────────────────────────────────────
+  useEffect(() => {
+    if (!mapRef.current) return
+    mapRef.current.setOptions({
+      mapTypeId: show3D ? 'satellite' : 'roadmap',
+      tilt: show3D ? 45 : 0,
+      styles: show3D ? [] : LIGHT_STYLE,
+    })
+  }, [show3D])
+
+  // ── Map click listener update ───────────────────────────────────────────
+  const clickListenerRef = useRef(null)
+  useEffect(() => {
+    if (!mapRef.current || !mapLoaded) return
+    if (clickListenerRef.current) clickListenerRef.current.remove()
+    if (onMapClick) {
+      clickListenerRef.current = mapRef.current.addListener('click', e => {
+        onMapClick({ lat: e.latLng.lat(), lng: e.latLng.lng() })
+      })
+    }
+    return () => { if (clickListenerRef.current) clickListenerRef.current.remove() }
+  }, [onMapClick, mapLoaded])
+
+  // ── Markers ─────────────────────────────────────────────────────────────
   useEffect(() => {
     if (!mapRef.current || !mapLoaded) return
 
+    // Clear old markers + info windows
     markersRef.current.forEach(m => m.setMap(null))
+    infoWindowsRef.current.forEach(w => w.close())
     markersRef.current = []
+    infoWindowsRef.current = []
 
-    markers.forEach(marker => {
-      const m = new window.google.maps.Marker({
-        position: marker.position,
-        map: mapRef.current,
-        title: marker.title || '',
-        icon: marker.icon || getMarkerIcon(markerType),
-        animation: marker.bounce ? window.google.maps.Animation.BOUNCE : null
-      })
+    // User dot
+    if (userMarkerRef.current) { userMarkerRef.current.setMap(null); userMarkerRef.current = null }
 
-      if (marker.info) {
-        const info = new window.google.maps.InfoWindow({ content: marker.info })
-        m.addListener('click', () => info.open(mapRef.current, m))
-      }
-      markersRef.current.push(m)
-    })
-
-    if (userMarkerRef.current) {
-      userMarkerRef.current.setMap(null)
-      userMarkerRef.current = null
-    }
-
+    // Draw user dot separately (updates without re-creating all markers)
     if (userLocation) {
       userMarkerRef.current = new window.google.maps.Marker({
         position: userLocation,
         map: mapRef.current,
-        title: 'You are here',
-        icon: {
-          url: `data:image/svg+xml,${encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48"><circle cx="24" cy="24" r="20" fill="#3b82f6" fill-opacity="0.2"/><circle cx="24" cy="24" r="16" fill="#3b82f6" stroke="white" stroke-width="2"/><circle cx="24" cy="20" r="5" fill="white"/><path d="M16 32c0-4 4-7 8-7s8 3 8 7" stroke="white" stroke-width="2" fill="none"/></svg>')}`,
-          scaledSize: new window.google.maps.Size(40, 40),
-          anchor: new window.google.maps.Point(20, 20)
-        }
+        title: 'Your Location',
+        icon: getUserDotIcon(),
+        zIndex: 100,
       })
+    }
+
+    // Draw passed markers
+    const hospitalMarkers = []
+    markers.forEach(marker => {
+      if (!marker?.position?.lat) return
+
+      let icon
+      switch (marker.type) {
+        case 'hospital': icon = getHospitalPinIcon(); break
+        case 'ambulance': icon = getAmbulanceIcon(); break
+        case 'user': return // user dot handled separately above
+        default: icon = makePin('#6b7280', '#4b5563', '?')
+      }
+
+      const m = new window.google.maps.Marker({
+        position: marker.position,
+        map: mapRef.current,
+        title: marker.title || '',
+        icon,
+        zIndex: marker.type === 'hospital' ? 200 : 150,
+        animation: marker.bounce ? window.google.maps.Animation.BOUNCE : null,
+      })
+
+      if (marker.info) {
+        const iw = new window.google.maps.InfoWindow({
+          content: marker.info,
+          maxWidth: 240,
+        })
+        m.addListener('click', () => {
+          infoWindowsRef.current.forEach(w => w.close())
+          iw.open(mapRef.current, m)
+        })
+        // Auto-open hospital info window
+        if (marker.type === 'hospital') {
+          setTimeout(() => iw.open(mapRef.current, m), 800)
+        }
+        infoWindowsRef.current.push(iw)
+      }
+
+      markersRef.current.push(m)
+      if (marker.type === 'hospital') hospitalMarkers.push(marker.position)
+    })
+
+    // Auto-fit bounds to show both user + hospital on map
+    if (userLocation && hospitalMarkers.length > 0) {
+      const bounds = new window.google.maps.LatLngBounds()
+      bounds.extend(userLocation)
+      hospitalMarkers.forEach(p => bounds.extend(p))
+      mapRef.current.fitBounds(bounds, { top: 60, right: 40, bottom: 40, left: 40 })
     }
   }, [markers, userLocation, mapLoaded])
 
+  // User dot position update (smooth — no full marker re-create)
+  useEffect(() => {
+    if (!mapRef.current || !mapLoaded) return
+    if (userMarkerRef.current && userLocation) {
+      userMarkerRef.current.setPosition(userLocation)
+    }
+  }, [userLocation, mapLoaded])
+
+  // ── Routes ──────────────────────────────────────────────────────────────
   useEffect(() => {
     if (!mapRef.current || !mapLoaded) return
 
     routeLinesRef.current.forEach(r => r.setMap(null))
     routeLinesRef.current = []
 
-    routes.forEach((route, idx) => {
-      let path;
-      if (route.polyline) {
-        path = window.google.maps.geometry.encoding.decodePath(route.polyline)
-      } else if (route.path) {
-        path = route.path
-      } else {
-        return
-      }
+    const allRoutes = activeRoute ? [activeRoute, ...routes.filter(r => r.id !== activeRoute.id)] : routes
+    allRoutes.forEach((route, idx) => {
+      let path
+      try {
+        if (route.polyline) path = window.google.maps.geometry.encoding.decodePath(route.polyline)
+        else if (route.path) path = route.path
+        else return
+      } catch { return }
 
+      const isActive = route.id === activeRoute?.id
       const line = new window.google.maps.Polyline({
-        path: path,
+        path,
         map: mapRef.current,
-        strokeColor: route.type === 'illustrative' ? '#3b82f6' : (route.fastest ? '#16a34a' : idx === 0 ? '#3b82f6' : '#6b7280'),
-        strokeOpacity: route.type === 'illustrative' ? 0.8 : (route.fastest ? 1 : 0.6),
-        strokeWeight: route.type === 'illustrative' ? 4 : (route.fastest ? 5 : 3),
-        icons: route.type === 'illustrative' ? [{
-          icon: { path: 'M 0,-1 0,1', strokeOpacity: 1, scale: 3 },
-          offset: '0',
-          repeat: '20px'
-        }] : null
+        strokeColor: isActive ? '#C8102E' : (route.fastest ? '#16a34a' : '#9ca3af'),
+        strokeOpacity: isActive ? 1 : 0.5,
+        strokeWeight: isActive ? 5 : 3,
+        zIndex: isActive ? 10 : 5,
       })
       routeLinesRef.current.push(line)
     })
 
+    // Fit to active route
     if (activeRoute) {
-      let path;
-      if (activeRoute.polyline) {
-        path = window.google.maps.geometry.encoding.decodePath(activeRoute.polyline)
-      } else if (activeRoute.path) {
-        path = activeRoute.path
-      }
-
-      if (path) {
-        const bounds = new window.google.maps.LatLngBounds()
-        path.forEach(p => bounds.extend(p))
-        mapRef.current.fitBounds(bounds)
-      }
+      try {
+        let path
+        if (activeRoute.polyline) path = window.google.maps.geometry.encoding.decodePath(activeRoute.polyline)
+        else if (activeRoute.path) path = activeRoute.path
+        if (path?.length) {
+          const bounds = new window.google.maps.LatLngBounds()
+          path.forEach(p => bounds.extend(p))
+          mapRef.current.fitBounds(bounds, { top: 60, right: 40, bottom: 80, left: 40 })
+        }
+      } catch {}
     }
   }, [routes, activeRoute, mapLoaded])
 
+  // ── Demo ambulance animation ─────────────────────────────────────────────
   useEffect(() => {
-    if (!mapRef.current) return
-    mapRef.current.setOptions({
-      styles: darkMode ? MAP_STYLES.dark : MAP_STYLES.light,
-      mapTypeId: show3D ? 'satellite' : 'roadmap',
-      tilt: show3D ? 45 : 0
-    });
-  }, [darkMode, show3D]);
+    if (!mapRef.current || !mapLoaded) return
 
-  useEffect(() => {
-    if (!mapRef.current || !mapLoaded) return;
-
-    if (!trafficLayerRef.current) {
-      trafficLayerRef.current = new window.google.maps.TrafficLayer();
+    if (!demoMode) {
+      if (demoPathRef.current) { demoPathRef.current.setMap(null); demoPathRef.current = null }
+      if (demoMarkerRef.current) { demoMarkerRef.current.setMap(null); demoMarkerRef.current = null }
+      return
     }
 
-    trafficLayerRef.current.setMap(traffic ? mapRef.current : null);
-  }, [traffic, mapLoaded]);
-
-  // Demo mode: animated ambulance path and marker
-  useEffect(() => {
-    if (!mapRef.current || !mapLoaded || !demoMode) return;
-
     if (demoPath.length > 1) {
-      if (demoPathRef.current) demoPathRef.current.setMap(null);
+      if (demoPathRef.current) demoPathRef.current.setMap(null)
       demoPathRef.current = new window.google.maps.Polyline({
-        path: demoPath,
-        map: mapRef.current,
-        strokeColor: '#16a34a',
-        strokeOpacity: 0.8,
-        strokeWeight: 5,
-        icons: [{
-          icon: { path: window.google.maps.SymbolPath.FORWARD_OPEN_ARROW, scale: 2, strokeColor: '#16a34a' },
-          offset: '0%',
-          repeat: '40px'
-        }]
-      });
+        path: demoPath, map: mapRef.current,
+        strokeColor: '#16a34a', strokeOpacity: 0.85, strokeWeight: 5,
+        zIndex: 20,
+      })
     }
 
     if (demoAmbulancePos) {
-      if (demoMarkerRef.current) demoMarkerRef.current.setMap(null);
-      demoMarkerRef.current = new window.google.maps.Marker({
-        position: demoAmbulancePos,
-        map: mapRef.current,
-        icon: getAmbulance3DIcon(),
-        zIndex: 1000
-      });
+      if (!demoMarkerRef.current) {
+        demoMarkerRef.current = new window.google.maps.Marker({
+          position: demoAmbulancePos,
+          map: mapRef.current,
+          icon: getAmbulanceIcon(),
+          zIndex: 500,
+        })
+      } else {
+        demoMarkerRef.current.setPosition(demoAmbulancePos)
+      }
     }
+  }, [demoMode, demoPath, demoAmbulancePos, mapLoaded])
 
-    if (userLocation && demoMode) {
-      if (demoUserRingRef.current) demoUserRingRef.current.setMap(null);
-      demoUserRingRef.current = new window.google.maps.Circle({
-        strokeColor: '#3b82f6',
-        strokeOpacity: 0.6,
-        strokeWeight: 2,
-        fillColor: '#3b82f6',
-        fillOpacity: 0.15,
-        map: mapRef.current,
-        center: userLocation,
-        radius: 50 + Math.sin(demoProgress * Math.PI * 2) * 20
-      });
-    }
-  }, [demoMode, demoPath, demoAmbulancePos, demoProgress, mapLoaded, userLocation]);
-
-  // User Avatar marker (shown when ambulance arrives)
+  // ── User avatar on arrival ───────────────────────────────────────────────
   useEffect(() => {
-    if (!mapRef.current || !mapLoaded || !userAvatar) return;
-
-    if (avatarMarkerRef.current) avatarMarkerRef.current.setMap(null);
-    
+    if (!mapRef.current || !mapLoaded || !userAvatar?.position) return
+    if (avatarMarkerRef.current) avatarMarkerRef.current.setMap(null)
     avatarMarkerRef.current = new window.google.maps.Marker({
       position: userAvatar.position,
       map: mapRef.current,
-      icon: getUserAvatarIcon(userAvatar.name),
-      zIndex: 1001,
-      title: userAvatar.name,
-      animation: window.google.maps.Animation.DROP
-    });
+      icon: makePin('#2563eb', '#1d4ed8', (userAvatar.name || 'You').charAt(0).toUpperCase()),
+      zIndex: 600,
+      animation: window.google.maps.Animation.DROP,
+      title: userAvatar.name || 'You',
+    })
+  }, [userAvatar, mapLoaded])
 
-    // Add info window for user
-    const infoWindow = new window.google.maps.InfoWindow({
-      content: `<div style="padding: 8px; font-weight: bold; color: #2563eb;">
-        <div style="display: flex; align-items: center; gap: 6px;">
-          <div style="width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; background: #3b82f6; border-radius: 50%; color: white;">
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-          </div>
-          <span>${userAvatar.name} - Waiting for ambulance</span>
-        </div>
-      </div>`
-    });
-
-    avatarMarkerRef.current.addListener('click', () => {
-      infoWindow.open(mapRef.current, avatarMarkerRef.current);
-    });
-
-    return () => {
-      if (avatarMarkerRef.current) avatarMarkerRef.current.setMap(null);
-    };
-  }, [userAvatar, mapLoaded]);
-
-  const handleZoom = (delta) => {
-    if (mapRef.current) {
-      mapRef.current.setZoom(mapRef.current.getZoom() + delta);
-    }
-  };
-
+  // ── Recenter ─────────────────────────────────────────────────────────────
   const handleRecenter = () => {
+    if (onRefreshLocation) onRefreshLocation()
     if (mapRef.current && userLocation) {
       mapRef.current.panTo(userLocation)
+      mapRef.current.setZoom(16)
     }
+  }
+  const handleZoom = (delta) => {
+    if (mapRef.current) mapRef.current.setZoom(mapRef.current.getZoom() + delta)
   }
 
   return (
     <div className="relative w-full" style={{ height }}>
-      <div ref={containerRef} className="w-full h-full rounded-xl overflow-hidden" />
+      <div ref={containerRef} className="w-full h-full" />
 
+      {/* Loading / error overlay */}
       {!mapLoaded && (
-        <div className="absolute inset-0 flex items-center justify-center bg-gray-100 dark:bg-gray-800 rounded-xl">
+        <div className="absolute inset-0 flex items-center justify-center bg-gray-100 rounded-xl">
           <div className="flex flex-col items-center gap-3">
             {mapError ? (
-              <p className="max-w-xs text-center text-sm text-red-600 dark:text-red-300">{mapError}</p>
+              <p className="max-w-xs text-center text-sm text-red-600">{mapError}</p>
             ) : (
               <>
-                <div className="w-10 h-10 border-4 border-red-500 border-t-transparent rounded-full animate-spin" />
-                <p className="text-sm text-gray-500 dark:text-gray-400">Loading map...</p>
+                <div className="w-10 h-10 border-4 border-[#C8102E] border-t-transparent rounded-full animate-spin" />
+                <p className="text-sm text-gray-500">Loading map...</p>
               </>
             )}
           </div>
         </div>
       )}
 
-      <div className="absolute top-4 left-4 flex flex-col gap-2">
-        <button onClick={handleRecenter} className="w-10 h-10 bg-white dark:bg-gray-800 rounded-lg shadow-md flex items-center justify-center text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all">
-          <Compass size={18} />
-        </button>
-        <button onClick={() => handleZoom(1)} className="w-10 h-10 bg-white dark:bg-gray-800 rounded-lg shadow-md flex items-center justify-center text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all">
-          <ZoomIn size={18} />
-        </button>
-        <button onClick={() => handleZoom(-1)} className="w-10 h-10 bg-white dark:bg-gray-800 rounded-lg shadow-md flex items-center justify-center text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all">
-          <ZoomOut size={18} />
-        </button>
-      </div>
+      {/* Map controls */}
+      {mapLoaded && (
+        <div className="absolute top-3 left-3 flex flex-col gap-1.5">
+          <button onClick={handleRecenter} title="Recenter" className="w-9 h-9 bg-white rounded-lg shadow-md flex items-center justify-center text-gray-600 hover:bg-gray-50 transition-all border border-gray-100">
+            <Compass size={16} />
+          </button>
+          <button onClick={() => handleZoom(1)} title="Zoom in" className="w-9 h-9 bg-white rounded-lg shadow-md flex items-center justify-center text-gray-600 hover:bg-gray-50 transition-all border border-gray-100">
+            <ZoomIn size={16} />
+          </button>
+          <button onClick={() => handleZoom(-1)} title="Zoom out" className="w-9 h-9 bg-white rounded-lg shadow-md flex items-center justify-center text-gray-600 hover:bg-gray-50 transition-all border border-gray-100">
+            <ZoomOut size={16} />
+          </button>
+        </div>
+      )}
 
-      {onToggle3D && (
+      {onToggle3D && mapLoaded && (
         <button
           onClick={onToggle3D}
-          className="absolute top-4 right-4 bg-white dark:bg-gray-800 rounded-lg shadow-md px-3 py-2 flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all"
+          className="absolute top-3 right-3 bg-white rounded-lg shadow-md px-2.5 py-1.5 flex items-center gap-1.5 text-xs font-semibold text-gray-600 hover:bg-gray-50 transition-all border border-gray-100"
         >
-          <Layers size={16} />
+          <Layers size={13} />
           {show3D ? '2D' : '3D'}
         </button>
       )}
 
       {traffic && mapLoaded && (
-        <div className="absolute bottom-4 left-4 bg-white/90 dark:bg-gray-800/90 backdrop-blur rounded-lg shadow-md px-3 py-2 flex items-center gap-2 text-xs text-gray-600 dark:text-gray-300">
-          <Navigation size={14} className="text-green-500" />
-          Traffic ON
+        <div className="absolute bottom-3 left-3 bg-white/90 backdrop-blur rounded-lg shadow-sm px-2.5 py-1.5 flex items-center gap-1.5 text-[10px] font-medium text-gray-500 border border-gray-100">
+          <Navigation size={11} className="text-emerald-500" />
+          Live traffic
         </div>
       )}
     </div>

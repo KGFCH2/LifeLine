@@ -1,167 +1,173 @@
 import { useState } from 'react'
-import { Link, useLocation } from 'react-router-dom'
-import { Home, Shield, Stethoscope, LayoutDashboard, User, Menu, X, Sun, Moon } from 'lucide-react'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
+import { Home, Shield, Stethoscope, LayoutDashboard, User, Menu, X, Phone } from 'lucide-react'
 import { useAuth } from '../context/AuthContext.jsx'
 
-const publicNavItems = [
-  { path: '/', icon: Home, label: 'Home' },
-  { path: '/emergency', icon: Shield, label: 'Emergency' },
-  { path: '/doctors', icon: Stethoscope, label: 'Doctors' }
-]
-
-const privateNavItems = [
-  { path: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
-  { path: '/profile', icon: User, label: 'Profile' }
-]
-
-export default function TopNav({ dark, toggleDark }) {
+export default function TopNav() {
   const { pathname } = useLocation()
+  const navigate = useNavigate()
   const { user } = useAuth()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
+  const scrollToSection = (id) => {
+    if (pathname !== '/') {
+      navigate('/')
+      setTimeout(() => document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' }), 350)
+    } else {
+      document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' })
+    }
+    setMobileMenuOpen(false)
+  }
+
+  const isActive = (path) => pathname === path
+
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 bg-white/90 dark:bg-gray-900/90 backdrop-blur-lg border-b border-gray-100 dark:border-gray-800">
+    <header className="fixed top-0 left-0 right-0 z-50 bg-white border-b border-gray-100">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-12">
+        <div className="flex items-center justify-between h-14">
+
           {/* Logo */}
-          <Link 
-            to="/" 
+          <Link
+            to="/"
             onClick={(e) => {
               if (pathname === '/') {
                 e.preventDefault()
                 window.scrollTo({ top: 0, behavior: 'smooth' })
               }
             }}
-            className="flex items-center gap-2 active:scale-95 transition-transform"
+            className="flex items-center gap-2.5 group"
           >
-            <div className="w-7 h-7 bg-red-600 rounded-lg flex items-center justify-center shadow-sm">
-              <Shield size={16} className="text-white" />
+            <div className="w-8 h-8 bg-[#C8102E] rounded-lg flex items-center justify-center shadow-sm">
+              <Shield size={15} className="text-white" />
             </div>
-            <span className="font-bold text-base text-gray-900 dark:text-white hidden sm:block">LifeLine+</span>
+            <div className="flex items-baseline gap-0.5">
+              <span className="font-extrabold text-[15px] text-gray-900 tracking-tight" style={{ fontFamily: "'Inter', sans-serif" }}>LifeLine</span>
+              <span className="font-black text-[15px] text-[#C8102E]" style={{ fontFamily: "'Inter', sans-serif" }}>+</span>
+            </div>
           </Link>
 
-          {/* Desktop Navigation - Center */}
-          <nav className="hidden md:flex items-center gap-0.5">
-            {publicNavItems.map(item => {
-              const active = pathname === item.path
-              const Icon = item.icon
-              return (
-                <Link
-                  key={item.path}
-                  to={item.path}
-                  className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all ${
-                    active
-                      ? 'text-red-600 bg-red-50 dark:bg-red-900/20'
-                      : 'text-gray-500 dark:text-gray-400 hover:text-red-600 hover:bg-gray-50 dark:hover:bg-gray-800'
-                  }`}
+          {/* Desktop Nav */}
+          <nav className="hidden md:flex items-center" style={{ fontFamily: "'JetBrains Mono', monospace" }}>
+            {[
+              { path: '/', label: 'Home', Icon: Home },
+              { path: '/emergency', label: 'Emergency', Icon: Shield },
+              ...(user ? [
+                { path: '/doctors', label: 'Doctors', Icon: Stethoscope },
+                { path: '/dashboard', label: 'Dashboard', Icon: LayoutDashboard },
+              ] : []),
+            ].map(({ path, label, Icon }) => (
+              <Link
+                key={path}
+                to={path}
+                className={`relative flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-medium transition-colors ${
+                  isActive(path)
+                    ? 'text-[#C8102E]'
+                    : 'text-gray-500 hover:text-gray-900'
+                }`}
+              >
+                {isActive(path) && (
+                  <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-4 h-0.5 bg-[#C8102E] rounded-full" />
+                )}
+                <Icon size={13} />
+                {label}
+              </Link>
+            ))}
+
+            {/* Divider */}
+            {pathname === '/' && (
+              <span className="w-px h-4 bg-gray-200 mx-1" />
+            )}
+
+            {/* Anchor scroll links — home only */}
+            {pathname === '/' && (
+              <>
+                <button
+                  onClick={() => scrollToSection('features')}
+                  className="flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-medium text-gray-500 hover:text-gray-900 transition-colors"
                 >
-                  <Icon size={14} />
-                  <span>{item.label}</span>
-                </Link>
-              )
-            })}
-            {user && privateNavItems.map(item => {
-              const active = pathname === item.path
-              const Icon = item.icon
-              return (
-                <Link
-                  key={item.path}
-                  to={item.path}
-                  className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all ${
-                    active
-                      ? 'text-red-600 bg-red-50 dark:bg-red-900/20'
-                      : 'text-gray-500 dark:text-gray-400 hover:text-red-600 hover:bg-gray-50 dark:hover:bg-gray-800'
-                  }`}
+                  Features
+                </button>
+                <button
+                  onClick={() => scrollToSection('contact')}
+                  className="flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-medium text-gray-500 hover:text-gray-900 transition-colors"
                 >
-                  <Icon size={14} />
-                  <span>{item.label}</span>
-                </Link>
-              )
-            })}
+                  Contact
+                </button>
+              </>
+            )}
           </nav>
 
-          {/* Right Side - User & Dark Mode */}
-          <div className="flex items-center gap-2">
-            {/* Dark Mode Toggle */}
-            <button
-              onClick={toggleDark}
-              style={{ '--glow-color': dark ? 'rgba(251, 191, 36, 0.4)' : 'rgba(139, 92, 246, 0.4)' }}
-              className={`w-8 h-8 flex items-center justify-center rounded-full transition-all duration-300 toggle-glow ${
-                dark 
-                  ? 'bg-amber-100/50 text-amber-600 border border-amber-200/50' 
-                  : 'bg-indigo-50 text-indigo-600 border border-indigo-100'
-              }`}
-              aria-label="Toggle dark mode"
+          {/* Right side */}
+          <div className="flex items-center gap-2.5">
+            {/* Emergency pill — always visible on desktop */}
+            <Link
+              to="/emergency"
+              className="hidden sm:flex items-center gap-1.5 bg-[#C8102E] hover:bg-[#a50d26] text-white text-[11px] font-bold px-3.5 py-1.5 rounded-lg transition-all duration-200 active:scale-95 shadow-sm"
+              style={{ fontFamily: "'JetBrains Mono', monospace" }}
             >
-              {dark ? <Sun size={16} className="animate-in fade-in zoom-in duration-300" /> : <Moon size={16} className="animate-in fade-in zoom-in duration-300" />}
-            </button>
+              <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
+              SOS
+            </Link>
 
-            {/* User Avatar */}
+            {/* User avatar */}
             {user && (
-              <Link to="/profile" className="flex items-center gap-2 ml-1">
-                <div className="w-7 h-7 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center text-[10px] font-bold text-red-600">
+              <Link to="/profile" className="flex items-center gap-2">
+                <div className="w-7 h-7 bg-[#C8102E] rounded-lg flex items-center justify-center text-[11px] font-black text-white">
                   {user.name?.charAt(0)?.toUpperCase() || 'U'}
                 </div>
-                <span className="text-[11px] font-medium text-gray-500 dark:text-gray-400 hidden lg:block">
+                <span className="text-[11px] font-medium text-gray-500 hidden lg:block" style={{ fontFamily: "'JetBrains Mono', monospace" }}>
                   {user.name?.split(' ')[0]}
                 </span>
               </Link>
             )}
 
-            {/* Mobile Menu Button */}
+            {/* Mobile hamburger */}
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="md:hidden w-8 h-8 flex items-center justify-center rounded-lg text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all"
-              aria-label="Toggle menu"
+              className="md:hidden w-8 h-8 flex items-center justify-center rounded-lg text-gray-500 hover:bg-gray-100 transition-all"
             >
-              {mobileMenuOpen ? <X size={18} /> : <Menu size={18} />}
+              {mobileMenuOpen ? <X size={16} /> : <Menu size={16} />}
             </button>
           </div>
         </div>
       </div>
 
-      {/* Mobile Menu */}
+      {/* Mobile menu */}
       {mobileMenuOpen && (
-        <div className="md:hidden border-t border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900">
+        <div className="md:hidden border-t border-gray-100 bg-white" style={{ fontFamily: "'JetBrains Mono', monospace" }}>
           <nav className="px-4 py-3 space-y-1">
-            {publicNavItems.map(item => {
-              const active = pathname === item.path
-              const Icon = item.icon
-              return (
-                <Link
-                  key={item.path}
-                  to={item.path}
-                  onClick={() => setMobileMenuOpen(false)}
-                  className={`flex items-center gap-3 px-3 py-3 rounded-lg text-sm font-medium transition-all ${
-                    active
-                      ? 'text-red-600 bg-red-50 dark:bg-red-900/20'
-                      : 'text-gray-600 dark:text-gray-300 hover:text-red-600 hover:bg-gray-50 dark:hover:bg-gray-800'
-                  }`}
-                >
-                  <Icon size={18} />
-                  <span>{item.label}</span>
-                </Link>
-              )
-            })}
-            {user && privateNavItems.map(item => {
-              const active = pathname === item.path
-              const Icon = item.icon
-              return (
-                <Link
-                  key={item.path}
-                  to={item.path}
-                  onClick={() => setMobileMenuOpen(false)}
-                  className={`flex items-center gap-3 px-3 py-3 rounded-lg text-sm font-medium transition-all ${
-                    active
-                      ? 'text-red-600 bg-red-50 dark:bg-red-900/20'
-                      : 'text-gray-600 dark:text-gray-300 hover:text-red-600 hover:bg-gray-50 dark:hover:bg-gray-800'
-                  }`}
-                >
-                  <Icon size={18} />
-                  <span>{item.label}</span>
-                </Link>
-              )
-            })}
+            {[
+              { path: '/', label: 'Home', Icon: Home },
+              { path: '/emergency', label: 'Emergency', Icon: Shield },
+              ...(user ? [
+                { path: '/doctors', label: 'Doctors', Icon: Stethoscope },
+                { path: '/dashboard', label: 'Dashboard', Icon: LayoutDashboard },
+                { path: '/profile', label: 'Profile', Icon: User },
+              ] : []),
+            ].map(({ path, label, Icon }) => (
+              <Link
+                key={path}
+                to={path}
+                onClick={() => setMobileMenuOpen(false)}
+                className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all ${
+                  isActive(path)
+                    ? 'text-[#C8102E] bg-red-50'
+                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                }`}
+              >
+                <Icon size={16} />
+                {label}
+              </Link>
+            ))}
+            <div className="pt-1 border-t border-gray-100">
+              <button onClick={() => scrollToSection('features')} className="w-full text-left flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 transition-all">
+                Features
+              </button>
+              <button onClick={() => scrollToSection('contact')} className="w-full text-left flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 transition-all">
+                <Phone size={16} />
+                Contact
+              </button>
+            </div>
           </nav>
         </div>
       )}

@@ -1,3 +1,6 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Basic&family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -82,32 +85,32 @@
   }
   body {
     @apply bg-gray-50 text-gray-900 antialiased;
-  }
-  body.dark {
-    @apply bg-gray-950 text-gray-100;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
   }
   #root {
     @apply min-h-screen;
   }
 }
 
+
 @layer components {
   .card {
-    @apply bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-100 dark:border-gray-800 p-4;
+    @apply bg-white rounded-xl shadow-sm border border-gray-100 p-4;
   }
   .btn-primary {
-    @apply bg-emergency hover:bg-red-700 text-white font-semibold py-3 px-6 rounded-xl transition-all active:scale-95 shadow-md hover:shadow-lg hover:shadow-red-500/20 disabled:opacity-50 disabled:cursor-not-allowed;
+    @apply bg-[#C8102E] hover:bg-[#a50d26] text-white font-semibold py-3 px-6 rounded-xl transition-all active:scale-95 shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed;
   }
   .btn-secondary {
-    @apply bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-900 dark:text-gray-100 font-medium py-3 px-6 rounded-xl transition-all active:scale-95 shadow-sm;
+    @apply bg-white hover:bg-gray-50 text-gray-900 font-medium py-3 px-6 rounded-xl transition-all active:scale-95 shadow-sm border border-gray-200;
   }
   .input-field {
-    @apply w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all;
+    @apply w-full px-4 py-3 rounded-xl border border-gray-200 bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#C8102E]/30 focus:border-[#C8102E]/50 transition-all;
   }
   .floating-btn {
-    @apply fixed bottom-24 right-4 z-50 w-14 h-14 bg-emergency text-white rounded-full shadow-lg flex items-center justify-center hover:bg-red-700 transition-all active:scale-90 hover:scale-110;
+    @apply fixed bottom-24 right-4 z-50 w-14 h-14 bg-[#C8102E] text-white rounded-full shadow-lg flex items-center justify-center hover:bg-[#a50d26] transition-all active:scale-90 hover:scale-110;
   }
 }
+
 
 @layer utilities {
   .safe-bottom {
@@ -366,4 +369,112 @@ html {
 
 .dark .focus-ring:focus {
   ring-offset-color: #111827;
+}
+
+/* ─── HERO SECTION STYLES ──────────────────────────────────────── */
+
+/* Soft airy hero background */
+.hero-bg {
+  background: linear-gradient(160deg,
+    #fff9f9 0%,
+    #fff4f4 25%,
+    #fef8f8 60%,
+    #ffffff 100%);
+}
+
+.dark .hero-bg {
+  background: linear-gradient(160deg,
+    #0f0606 0%,
+    #150808 25%,
+    #111010 60%,
+    #0a0a0a 100%);
+}
+
+/* Gentle float for hero elements */
+@keyframes hero-float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-8px); }
+}
+
+@keyframes hero-float-delay {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-5px); }
+}
+
+.hero-float {
+  animation: hero-float 4s ease-in-out infinite;
+}
+
+.hero-float-delay {
+  animation: hero-float-delay 5s ease-in-out 1s infinite;
+}
+
+/* Hero CTA button pulse */
+.hero-cta-primary {
+  position: relative;
+  overflow: hidden;
+}
+
+.hero-cta-primary::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to right, transparent 0%, rgba(255,255,255,0.15) 50%, transparent 100%);
+  transform: translateX(-100%);
+  transition: transform 0.5s ease;
+}
+
+.hero-cta-primary:hover::after {
+  transform: translateX(100%);
+}
+
+/* Ambulance dot ping on map mockup */
+@keyframes ambulance-ping {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(200, 16, 46, 0.5);
+    transform: scale(1);
+  }
+  50% {
+    box-shadow: 0 0 0 8px rgba(200, 16, 46, 0);
+    transform: scale(1.1);
+  }
+}
+
+.ambulance-ping {
+  animation: ambulance-ping 2s ease-in-out infinite;
+}
+
+/* Section reveal */
+@keyframes section-reveal {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Feature card */
+.feature-card {
+  position: relative;
+  overflow: hidden;
+}
+
+.feature-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(to right, #C8102E, transparent);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.3s ease;
+}
+
+.feature-card:hover::before {
+  transform: scaleX(1);
 }

@@ -1,561 +1,462 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext.jsx'
-import MapView from '../components/MapView.jsx'
 import LoginModal from '../components/LoginModal.jsx'
-import Loader from '../components/Loader.jsx'
-import { Ambulance, Shield, Stethoscope, Siren, MapPin, Clock, Navigation, Star, Filter, ChevronRight, Phone, Pill } from 'lucide-react'
+import { DotLottieReact } from '@lottiefiles/dotlottie-react'
+import {
+  Ambulance, Shield, Stethoscope, MapPin, Clock,
+  Phone, Mail, Send, CheckCircle, ChevronRight, Zap,
+  Navigation, Brain, Heart, ArrowRight, Star, Activity,
+  Calendar, Check
+} from 'lucide-react'
 
-const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8080'
+const topDoctors = [
+  {
+    id: 1,
+    name: 'Dr. Priya Sharma',
+    specialty: 'Cardiologist',
+    hospital: 'Apollo Hospital',
+    experience: '14 yrs',
+    rating: 4.9,
+    fee: '₹800',
+    initials: 'PS',
+    availableToday: true,
+  },
+  {
+    id: 2,
+    name: 'Dr. Arjun Banerjee',
+    specialty: 'Emergency Medicine',
+    hospital: 'AMRI Hospitals',
+    experience: '11 yrs',
+    rating: 4.8,
+    fee: '₹650',
+    initials: 'AB',
+    availableToday: true,
+  },
+  {
+    id: 3,
+    name: 'Dr. Meera Gupta',
+    specialty: 'General Physician',
+    hospital: 'Fortis Hospital',
+    experience: '9 yrs',
+    rating: 4.7,
+    fee: '₹500',
+    initials: 'MG',
+    availableToday: true,
+  },
+  {
+    id: 4,
+    name: 'Dr. Rohit Sen',
+    specialty: 'Orthopedic',
+    hospital: 'SSKM Hospital',
+    experience: '16 yrs',
+    rating: 4.8,
+    fee: '₹900',
+    initials: 'RS',
+    availableToday: false,
+  },
+]
 
 export default function Home() {
   const { user } = useAuth()
   const navigate = useNavigate()
   const [showLogin, setShowLogin] = useState(false)
-  const [location, setLocation] = useState(null)
-  const [services, setServices] = useState([])
-  const [serviceType, setServiceType] = useState('hospital')
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState('')
-  const [dark, setDark] = useState(false)
-  const [filters, setFilters] = useState({ radius: '5000', minRating: '', openNow: false, specialty: '' })
-  const [selectedService, setSelectedService] = useState(null)
-  const [mapCenter, setMapCenter] = useState(null)
-  const [routes, setRoutes] = useState([])
-  const [activeRoute, setActiveRoute] = useState(null)
-  const [serviceCounts, setServiceCounts] = useState({ hospital: 10, police: 5, doctor: 12, pharmacy: 15 })
-
-  useEffect(() => {
-    const saved = localStorage.getItem('lifeline_dark') === 'true'
-    setDark(saved)
-  }, [])
-
-  useEffect(() => {
-    if (!('geolocation' in navigator)) {
-      setError('Geolocation not supported')
-      setLocation({ lat: 22.5726, lng: 88.3639 })
-      return
-    }
-    navigator.geolocation.getCurrentPosition(
-      pos => {
-        const loc = { lat: pos.coords.latitude, lng: pos.coords.longitude }
-        setLocation(loc)
-      },
-      () => {
-        setError('Location access denied. Using default.')
-        setLocation({ lat: 22.5726, lng: 88.3639 })
-      },
-      { enableHighAccuracy: true, timeout: 10000 }
-    )
-  }, [])
-
-  const serviceIcons = {
-    hospital: { icon: Siren, label: 'Hospitals', color: 'text-red-500 bg-red-50 dark:bg-red-900/20', hex: '#ef4444' },
-    police: { icon: Shield, label: 'Police', color: 'text-blue-500 bg-blue-50 dark:bg-blue-900/20', hex: '#3b82f6' },
-    doctor: { icon: Stethoscope, label: 'Doctors', color: 'text-amber-500 bg-amber-50 dark:bg-amber-900/20', hex: '#f59e0b' },
-    pharmacy: { icon: MapPin, label: 'Pharmacy', color: 'text-green-500 bg-green-50 dark:bg-green-900/20', hex: '#22c55e' }
-  }
-
-  const demoServices = useCallback((type = serviceType) => {
-    const baseLat = location?.lat || 22.5726
-    const baseLng = location?.lng || 88.3639
-    
-    const generateDemo = (t, count) => {
-      const config = {
-        hospital: { prefix: 'Nearby', suffix: 'Hospital', names: ['City', 'General', 'Emergency', 'Metro'] },
-        police: { prefix: 'Local', suffix: 'Police Station', names: ['Sector 5', 'Bidhannagar', 'Park Street', 'Central'] },
-        doctor: { prefix: 'Dr.', suffix: 'Clinic', names: ['Sharma', 'Banerjee', 'Gupta', 'Sen'] },
-        pharmacy: { prefix: 'Quick', suffix: 'Pharmacy', names: ['MedPlus', 'Apollo', 'Frank Ross', 'Wellness'] }
-      }
-      
-      const c = config[t]
-      return Array.from({ length: count }).map((_, i) => ({
-        id: `${t}-${i}`,
-        name: `${c.prefix} ${c.names[i % c.names.length]} ${c.suffix}`,
-        address: `Street ${i + 1}, Near current location`,
-        rating: (4 + Math.random()).toFixed(1),
-        distance: 0.5 + (i * 0.4),
-        openNow: true,
-        phone: t === 'police' ? '100' : `+91 98300 1234${i}`,
-        location: {
-          lat: baseLat + (Math.random() - 0.5) * 0.02,
-          lng: baseLng + (Math.random() - 0.5) * 0.02
-        },
-        type: t
-      }))
-    }
-
-    const demoData = {
-      hospital: generateDemo('hospital', 10),
-      police: generateDemo('police', 5),
-      doctor: generateDemo('doctor', 10),
-      pharmacy: generateDemo('pharmacy', 10)
-    }
-    
-    return demoData[type] || []
-  }, [location, serviceType])
-
-  const fetchServices = useCallback(async (type = serviceType) => {
-    if (!location) return
-    setLoading(true)
-    setError('')
-    try {
-      const params = new URLSearchParams({
-        lat: String(location.lat),
-        lng: String(location.lng),
-        type,
-        radius: filters.radius,
-        sortBy: filters.openNow ? 'availability' : 'distance'
-      })
-      if (filters.minRating) params.set('minRating', filters.minRating)
-      if (filters.openNow) params.set('openNow', 'true')
-      if (type === 'doctor' && filters.specialty) params.set('specialty', filters.specialty)
-
-      const res = await fetch(`${BACKEND_URL}/api/nearest-services?${params.toString()}`)
-      const data = await res.json()
-      
-      if (data.results && data.results.length > 0) {
-        setServices(data.results.map(s => ({ ...s, type })))
-        setServiceCounts(prev => ({ ...prev, [type]: data.results.length }))
-      } else {
-        const demo = demoServices(type)
-        setServices(demo)
-        setServiceCounts(prev => ({ ...prev, [type]: demo.length }))
-      }
-    } catch (err) {
-      const demo = demoServices(type)
-      setServices(demo)
-      setServiceCounts(prev => ({ ...prev, [type]: demo.length }))
-    } finally {
-      setLoading(false)
-    }
-  }, [location, serviceType, filters, demoServices])
-
-  useEffect(() => {
-    if (location) fetchServices()
-  }, [location, serviceType, fetchServices])
+  const [form, setForm] = useState({ name: '', email: '', message: '' })
+  const [sent, setSent] = useState(false)
 
   const handleEmergency = () => {
     if (!user) setShowLogin(true)
     else navigate('/emergency')
   }
 
-  const markers = services.slice(0, 10).filter(s => s.location).map(s => ({
-    position: s.location,
-    title: s.name,
-    color: serviceIcons[serviceType].hex,
-    info: `<div style="padding:8px;max-width:200px"><strong>${s.name}</strong><br/>${s.address || ''}<br/><span style="color:#f59e0b">★</span> ${s.rating || 'N/A'}</div>`
-  }))
-
-  const handleServiceTypeChange = (key) => {
-    setServiceType(key)
-    setSelectedService(null)
-    setRoutes([]) 
-    setActiveRoute(null)
-    // Pass key directly to bypass state lag
-    if (location) {
-      fetchServices(key)
-    }
+  const handleContactSubmit = (e) => {
+    e.preventDefault()
+    setSent(true)
+    setTimeout(() => {
+      setSent(false)
+      setForm({ name: '', email: '', message: '' })
+    }, 3000)
   }
 
-  const handleGetDirections = (service) => {
-    if (!location || !service?.location) return
-    
-    // Generate an illustrative path (curved)
-    const points = []
-    const steps = 20
-    for (let i = 0; i <= steps; i++) {
-      const t = i / steps
-      const lat = location.lat + (service.location.lat - location.lat) * t
-      const lng = location.lng + (service.location.lng - location.lng) * t
-      // Add a slight curve for illustration
-      const curve = Math.sin(t * Math.PI) * 0.002
-      points.push({ lat: lat + curve, lng: lng + curve })
-    }
+  const features = [
+    { icon: MapPin, title: 'Smart Discovery', desc: 'Instant GPS-based discovery of hospitals, ambulances, and emergency services near you.', iconColor: 'text-[#C8102E]', bg: 'bg-red-50' },
+    { icon: Navigation, title: 'Live Tracking', desc: 'Real-time ambulance tracking with traffic-aware routing and ETA via Socket.io.', iconColor: 'text-blue-600', bg: 'bg-blue-50' },
+    { icon: Brain, title: 'AI Verification', desc: 'Gemini AI validates civilian emergency requests instantly — vehicle, purpose, contact.', iconColor: 'text-violet-600', bg: 'bg-violet-50' },
+    { icon: Stethoscope, title: 'Doctor Booking', desc: 'Discover nearby doctors, filter by specialty, check available slots and confirm.', iconColor: 'text-emerald-600', bg: 'bg-emerald-50' },
+    { icon: Shield, title: 'Police Coordination', desc: 'Auto-detect police stations along route and broadcast live alerts instantly.', iconColor: 'text-blue-600', bg: 'bg-blue-50' },
+    { icon: Zap, title: 'Instant Response', desc: 'A 5-minute acceptance window with automatic fallback — you are never alone.', iconColor: 'text-amber-600', bg: 'bg-amber-50' },
+  ]
 
-    const illustrativeRoute = {
-      id: `route-${service.id}`,
-      path: points,
-      distance: `${service.distance?.toFixed(1) || '1.2'} km`,
-      duration: `${Math.round((service.distance || 1.2) * 4)} mins`,
-      summary: 'Tactical Illustration Path',
-      type: 'illustrative'
-    }
+  const steps = [
+    { num: '01', title: 'Request Help', desc: 'Tap "Book Emergency", allow location, and we instantly find the nearest available ambulance.', icon: Ambulance },
+    { num: '02', title: 'Live Tracking', desc: 'Watch your ambulance move on the map with real-time ETA and alternate route suggestions.', icon: Activity },
+    { num: '03', title: 'Help Arrives', desc: 'Police alerted along route. Nearest hospital pre-selected. Every second is optimized.', icon: Heart },
+  ]
 
-    setRoutes([illustrativeRoute])
-    setActiveRoute(illustrativeRoute)
-    setSelectedService(null) // Close modal to show map
-  }
+  const helplines = [
+    { label: 'Ambulance', number: '108', iconBg: 'bg-[#C8102E]', cardBg: 'bg-red-50', border: 'border-red-100' },
+    { label: 'Emergency', number: '112', iconBg: 'bg-orange-500', cardBg: 'bg-orange-50', border: 'border-orange-100' },
+    { label: 'Police', number: '100', iconBg: 'bg-blue-600', cardBg: 'bg-blue-50', border: 'border-blue-100' },
+    { label: 'Fire', number: '101', iconBg: 'bg-amber-500', cardBg: 'bg-amber-50', border: 'border-amber-100' },
+  ]
 
   return (
-    <div className="pb-24">
-      {/* Hero Section */}
-      <div className="bg-gradient-to-br from-red-600 to-red-700 text-white p-5 pb-6 rounded-b-3xl">
-        <h1 className="text-xl font-bold mb-1">Emergency Services</h1>
-        <p className="text-red-100 text-sm">Find nearest hospitals, police & pharmacy</p>
-        
-        {/* Location pill */}
-        <div className="flex items-center gap-2 bg-white/15 backdrop-blur rounded-xl px-3 py-2 mt-3">
-          <MapPin size={14} className="text-red-200" />
-          <span className="text-xs text-red-50 truncate">
-            {location ? `${location.lat.toFixed(4)}, ${location.lng.toFixed(4)}` : 'Detecting location...'}
-          </span>
-        </div>
+    <div className="overflow-x-hidden">
 
-        {/* Emergency CTA */}
-        <button
-          onClick={handleEmergency}
-          className="w-full mt-3 bg-white text-red-600 font-bold py-3 rounded-xl shadow-md flex items-center justify-center gap-2 transition-colors"
-        >
-          <Ambulance size={20} />
-          <span>EMERGENCY — Get Help Now</span>
-        </button>
-      </div>
+      {/* ─── HERO ──────────────────────────────────────────────────────────── */}
+      <section className="relative min-h-screen flex items-center overflow-hidden bg-white px-4 sm:px-8 lg:px-16 pt-14">
+        {/* Subtle background texture */}
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_rgba(200,16,46,0.05)_0%,_transparent_60%)] pointer-events-none" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_left,_rgba(200,16,46,0.03)_0%,_transparent_50%)] pointer-events-none" />
 
-      {/* Service Categories - Illustrated */}
-      <div className="px-4 mt-4">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          <button
-            onClick={() => handleServiceTypeChange('hospital')}
-            disabled={loading}
-            className={`group p-4 rounded-2xl text-center transition-all duration-300 border-2 card-hover active:scale-95 ${
-              serviceType === 'hospital'
-                ? 'bg-red-500 border-red-500 text-white shadow-lg shadow-red-500/20'
-                : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 border-gray-100 dark:border-gray-700 hover:border-red-200 dark:hover:border-red-900/30'
-            } ${loading ? 'opacity-60' : ''}`}
-          >
-            <div className={`w-14 h-14 mx-auto rounded-full flex items-center justify-center mb-2 transition-all duration-300 icon-pop ${
-              serviceType === 'hospital' ? 'bg-white/20' : 'bg-red-50 dark:bg-red-900/20 text-red-500 shadow-sm group-hover:shadow-red-500/20'
-            }`}>
-              <Siren size={28} strokeWidth={2.5} />
+        <div className="max-w-7xl mx-auto w-full grid grid-cols-1 lg:grid-cols-2 gap-12 items-center py-16 lg:py-0">
+
+          {/* Left — text */}
+          <div className="order-2 lg:order-1 flex flex-col items-start">
+            {/* Eyebrow */}
+            <div className="inline-flex items-center gap-2 bg-red-50 border border-red-100 rounded-full px-4 py-1.5 mb-6">
+              <span className="w-2 h-2 rounded-full bg-[#C8102E] animate-pulse" />
+              <span className="text-xs font-semibold text-[#C8102E]" style={{ fontFamily: "'JetBrains Mono', monospace" }}>
+                India Emergency Response Network
+              </span>
             </div>
-            <span className="text-sm font-bold">Hospitals</span>
-            <span className="block text-[10px] opacity-80 mt-0.5">{serviceCounts.hospital} nearby</span>
-          </button>
 
-          <button
-            onClick={() => handleServiceTypeChange('police')}
-            disabled={loading}
-            className={`group p-4 rounded-2xl text-center transition-all duration-300 border-2 card-hover active:scale-95 ${
-              serviceType === 'police'
-                ? 'bg-blue-500 border-blue-500 text-white shadow-lg shadow-blue-500/20'
-                : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 border-gray-100 dark:border-gray-700 hover:border-blue-200 dark:hover:border-blue-900/30'
-            } ${loading ? 'opacity-60' : ''}`}
-          >
-            <div className={`w-14 h-14 mx-auto rounded-full flex items-center justify-center mb-2 transition-all duration-300 icon-pop ${
-              serviceType === 'police' ? 'bg-white/20' : 'bg-blue-50 dark:bg-blue-900/20 text-blue-500 shadow-sm group-hover:shadow-blue-500/20'
-            }`}>
-              <Shield size={28} strokeWidth={2.5} />
-            </div>
-            <span className="text-sm font-bold">Police</span>
-            <span className="block text-[10px] opacity-80 mt-0.5">{serviceCounts.police} nearby</span>
-          </button>
+            {/* Headline */}
+            <h1 className="font-extrabold text-gray-900 leading-[1.05] mb-5" style={{ fontFamily: "'Inter', sans-serif" }}>
+              <span className="block text-5xl sm:text-6xl lg:text-7xl">When Every</span>
+              <span className="block text-5xl sm:text-6xl lg:text-7xl text-[#C8102E]">Second Counts.</span>
+            </h1>
 
-          <button
-            onClick={() => handleServiceTypeChange('doctor')}
-            disabled={loading}
-            className={`group p-4 rounded-2xl text-center transition-all duration-300 border-2 card-hover active:scale-95 ${
-              serviceType === 'doctor'
-                ? 'bg-amber-500 border-amber-500 text-white shadow-lg shadow-amber-500/20'
-                : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 border-gray-100 dark:border-gray-700 hover:border-amber-200 dark:hover:border-amber-900/30'
-            } ${loading ? 'opacity-60' : ''}`}
-          >
-            <div className={`w-14 h-14 mx-auto rounded-full flex items-center justify-center mb-2 transition-all duration-300 icon-pop ${
-              serviceType === 'doctor' ? 'bg-white/20' : 'bg-amber-50 dark:bg-amber-900/20 text-amber-500 shadow-sm group-hover:shadow-amber-500/20'
-            }`}>
-              <Stethoscope size={28} strokeWidth={2.5} />
-            </div>
-            <span className="text-sm font-bold">Doctors</span>
-            <span className="block text-[10px] opacity-80 mt-0.5">{serviceCounts.doctor} nearby</span>
-          </button>
+            {/* Subtext */}
+            <p className="text-gray-500 text-lg sm:text-xl max-w-lg mb-8 leading-relaxed" style={{ fontFamily: "'Basic', serif" }}>
+              Ambulance tracking, hospital discovery, police coordination, and AI verification — one tap away.
+            </p>
 
-          <button
-            onClick={() => handleServiceTypeChange('pharmacy')}
-            disabled={loading}
-            className={`group p-4 rounded-2xl text-center transition-all duration-300 border-2 card-hover active:scale-95 ${
-              serviceType === 'pharmacy'
-                ? 'bg-green-500 border-green-500 text-white shadow-lg shadow-green-500/20'
-                : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 border-gray-100 dark:border-gray-700 hover:border-green-200 dark:hover:border-green-900/30'
-            } ${loading ? 'opacity-60' : ''}`}
-          >
-            <div className={`w-14 h-14 mx-auto rounded-full flex items-center justify-center mb-2 transition-all duration-300 icon-pop ${
-              serviceType === 'pharmacy' ? 'bg-white/20' : 'bg-green-50 dark:bg-green-900/20 text-green-500 shadow-sm group-hover:shadow-green-500/20'
-            }`}>
-              <Pill size={28} strokeWidth={2.5} />
-            </div>
-            <span className="text-sm font-bold">Pharmacy</span>
-            <span className="block text-[10px] opacity-80 mt-0.5">{serviceCounts.pharmacy} nearby</span>
-          </button>
-        </div>
-        
-        {loading && (
-          <div className="flex items-center justify-center gap-2 mt-3 text-sm text-gray-500">
-            <div className="w-4 h-4 border-2 border-red-500 border-t-transparent rounded-full animate-spin" />
-            <span>Searching nearest {serviceType}...</span>
-          </div>
-        )}
-      </div>
-
-      {/* Map - Shows selected service or all services */}
-      <div className="px-4 mt-4">
-        <div className="card overflow-hidden p-0">
-          <MapView
-            center={selectedService ? { lat: selectedService.location.lat, lng: selectedService.location.lng } : (mapCenter || location)}
-            markers={selectedService ? [{
-              position: selectedService.location,
-              title: selectedService.name,
-              color: serviceType === 'hospital' ? '#ef4444' : serviceType === 'police' ? '#3b82f6' : serviceType === 'doctor' ? '#f59e0b' : '#22c55e',
-              info: `<div style="padding:8px;max-width:200px"><strong>${selectedService.name}</strong><br/>${selectedService.address || ''}<br/><span style="color:#f59e0b">★</span> ${selectedService.rating || 'N/A'}</div>`
-            }] : markers}
-            routes={routes}
-            activeRoute={activeRoute}
-            userLocation={location}
-            height="320px"
-            darkMode={dark}
-            traffic={true}
-            zoom={selectedService ? 16 : 14}
-            selectedMarker={selectedService?.id}
-            markerType={serviceType}
-          />
-        </div>
-        {selectedService && (
-          <div className="mt-2 flex items-center justify-between">
-            <p className="text-xs text-gray-500">Showing: <span className="font-medium text-gray-900">{selectedService.name}</span></p>
-            <button 
-              onClick={() => setSelectedService(null)}
-              className="text-xs text-red-600 font-medium hover:underline"
-            >
-              Show all
-            </button>
-          </div>
-        )}
-      </div>
-
-      {/* Service Cards */}
-      <div className="px-4 mt-4">
-        <div className="flex items-center justify-between mb-3">
-          <h2 className="font-bold text-gray-900 dark:text-white text-lg">Nearby {serviceIcons[serviceType].label}</h2>
-          <button className="flex items-center gap-1 text-sm text-red-600 font-medium">
-            <Filter size={14} />
-            Live Filters
-          </button>
-        </div>
-
-        <div className="mb-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
-          <select
-            value={filters.radius}
-            onChange={e => setFilters(f => ({ ...f, radius: e.target.value }))}
-            className="input-field py-2 text-xs"
-            aria-label="Distance filter"
-          >
-            <option value="2000">Within 2 km</option>
-            <option value="5000">Within 5 km</option>
-            <option value="10000">Within 10 km</option>
-          </select>
-          <select
-            value={filters.minRating}
-            onChange={e => setFilters(f => ({ ...f, minRating: e.target.value }))}
-            className="input-field py-2 text-xs"
-            aria-label="Rating filter"
-          >
-            <option value="">Any rating</option>
-            <option value="3.5">3.5+ rating</option>
-            <option value="4">4+ rating</option>
-            <option value="4.5">4.5+ rating</option>
-          </select>
-          <button
-            onClick={() => setFilters(f => ({ ...f, openNow: !f.openNow }))}
-            className={`rounded-xl px-3 py-2 text-xs font-semibold transition-all ${filters.openNow ? 'bg-green-600 text-white' : 'bg-white text-gray-600 shadow-sm dark:bg-gray-800 dark:text-gray-300'}`}
-          >
-            {filters.openNow ? 'Open now' : 'Any time'}
-          </button>
-          {serviceType === 'doctor' ? (
-            <select
-              value={filters.specialty}
-              onChange={e => setFilters(f => ({ ...f, specialty: e.target.value }))}
-              className="input-field py-2 text-xs"
-              aria-label="Doctor specialty filter"
-            >
-              <option value="">Any specialty</option>
-              <option value="Cardiologist">Cardiology</option>
-              <option value="Emergency Medicine">Emergency</option>
-              <option value="Pediatrician">Pediatric</option>
-              <option value="Orthopedic">Orthopedic</option>
-            </select>
-          ) : (
-            <div className="rounded-xl bg-white px-3 py-2 text-xs font-semibold text-gray-600 shadow-sm dark:bg-gray-800 dark:text-gray-300">
-              Nearest first
-            </div>
-          )}
-        </div>
-
-        {loading && (
-          <Loader text={`Searching nearby ${serviceType}...`} />
-        )}
-
-        {error && (
-          <div className="text-center py-8">
-            <p className="text-red-500 text-sm">{error}</p>
-            <button onClick={fetchServices} className="mt-2 text-sm text-red-600 font-medium">Retry</button>
-          </div>
-        )}
-
-        <div className="space-y-3">
-          {services.slice(0, 8).map(service => {
-            const ServiceIcon = serviceIcons[serviceType].icon
-            const isSelected = selectedService?.id === service.id
-            return (
-              <div 
-                key={service.id} 
-                onClick={() => {
-                  setSelectedService(service)
-                  setMapCenter(service.location)
-                }}
-                className={`card flex gap-4 items-start cursor-pointer transition-colors ${
-                  isSelected ? 'ring-2 ring-red-500 bg-red-50 dark:bg-red-900/10' : 'hover:bg-gray-50 dark:hover:bg-gray-800/50'
-                }`}
+            {/* CTA Buttons */}
+            <div className="flex flex-col sm:flex-row gap-3 mb-10 w-full sm:w-auto">
+              <button
+                onClick={handleEmergency}
+                id="hero-emergency-btn"
+                className="flex items-center justify-center gap-2.5 bg-[#C8102E] hover:bg-[#a50d26] text-white font-bold px-8 py-4 rounded-xl shadow-lg shadow-[#C8102E]/20 transition-all duration-200 active:scale-95 text-base"
               >
-                <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 ${serviceIcons[serviceType].color}`}>
-                  <ServiceIcon size={22} />
+                <Ambulance size={20} />
+                Book Emergency
+                <ArrowRight size={16} className="opacity-80" />
+              </button>
+              <button
+                onClick={() => navigate('/doctors')}
+                id="hero-doctors-btn"
+                className="flex items-center justify-center gap-2.5 bg-white hover:bg-gray-50 text-gray-800 font-semibold px-8 py-4 rounded-xl border border-gray-200 shadow-sm transition-all duration-200 active:scale-95 text-base"
+              >
+                <Stethoscope size={18} />
+                Find Doctors
+              </button>
+            </div>
+
+            {/* Trust stats */}
+            <div className="flex items-center gap-6 pt-4 border-t border-gray-100 w-full">
+              {[
+                { value: '< 5 min', label: 'Response Time' },
+                { value: '500+', label: 'Ambulances' },
+                { value: '24/7', label: 'Available' },
+              ].map((s) => (
+                <div key={s.label} className="flex flex-col">
+                  <span className="text-xl font-extrabold text-gray-900">{s.value}</span>
+                  <span className="text-xs text-gray-400">{s.label}</span>
                 </div>
-                <div className="flex-1 min-w-0">
-                  <h3 className="font-semibold text-gray-900 dark:text-white text-sm truncate">{service.name}</h3>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 line-clamp-1">{service.address}</p>
-                  <div className="flex items-center gap-3 mt-2">
-                    <span className="flex items-center gap-1 text-xs text-amber-600 font-medium">
-                      <Star size={12} fill="currentColor" />
-                      {service.rating || 'N/A'}
-                    </span>
-                    <span className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400">
-                      <Navigation size={12} />
-                      {service.distance ? `${service.distance.toFixed(1)} km` : 'N/A'}
-                    </span>
-                    <span className={`text-xs px-2 py-0.5 rounded-full ${service.openNow ? 'bg-green-100 text-green-700 dark:bg-green-900/30' : 'bg-gray-100 text-gray-600 dark:bg-gray-800'}`}>
-                      {service.openNow === null ? 'Hours N/A' : service.openNow ? 'Open' : 'Closed'}
-                    </span>
+              ))}
+            </div>
+          </div>
+
+          {/* Right — Lottie animation */}
+          <div className="order-1 lg:order-2 flex items-center justify-center">
+            <div className="relative w-full max-w-md lg:max-w-xl">
+              <DotLottieReact
+                src="https://lottie.host/93fb06f3-844c-4188-9ebf-b76b9109f6b9/OEIzvHCqFr.lottie"
+                loop
+                autoplay
+                style={{ width: '100%', height: 'auto' }}
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Scroll hint */}
+        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1 opacity-40 pointer-events-none">
+          <div className="w-5 h-8 rounded-full border-2 border-gray-400 flex items-start justify-center p-1">
+            <div className="w-1 h-2 rounded-full bg-gray-400 animate-bounce" />
+          </div>
+        </div>
+      </section>
+
+      {/* ─── FEATURES ─────────────────────────────────────────────────────── */}
+      <section id="features" className="py-20 px-4 bg-gray-50">
+        <div className="max-w-5xl mx-auto">
+          <div className="flex flex-col items-center text-center mb-12">
+            <span className="text-xs font-bold uppercase tracking-widest text-[#C8102E] mb-3" style={{ fontFamily: "'JetBrains Mono', monospace" }}>FEATURES</span>
+            <h2 className="text-3xl sm:text-4xl font-extrabold text-gray-900 mb-4">Everything you need in a crisis</h2>
+            <p className="text-gray-500 max-w-md text-base" style={{ fontFamily: "'Basic', serif" }}>
+              LifeLine+ combines real-time data, AI, and live coordination so you always get the fastest possible help.
+            </p>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {features.map((f) => {
+              const Icon = f.icon
+              return (
+                <div key={f.title} className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-300 group">
+                  <div className={`w-11 h-11 ${f.bg} rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300`}>
+                    <Icon size={21} className={f.iconColor} />
                   </div>
-                  {isSelected && (
-                    <div className="flex items-center gap-1 text-xs text-red-600 mt-2 font-medium">
-                      <MapPin size={12} /> Showing on map
+                  <h3 className="font-bold text-gray-900 mb-2">{f.title}</h3>
+                  <p className="text-sm text-gray-500 leading-relaxed">{f.desc}</p>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      </section>
+
+      {/* ─── HOW IT WORKS ─────────────────────────────────────────────────── */}
+      <section className="py-20 px-4 bg-white">
+        <div className="max-w-4xl mx-auto">
+          <div className="flex flex-col items-center text-center mb-14">
+            <span className="text-xs font-bold uppercase tracking-widest text-[#C8102E] mb-3" style={{ fontFamily: "'JetBrains Mono', monospace" }}>HOW IT WORKS</span>
+            <h2 className="text-3xl sm:text-4xl font-extrabold text-gray-900 mb-4">Help in 3 simple steps</h2>
+            <p className="text-gray-500 max-w-md text-base" style={{ fontFamily: "'Basic', serif" }}>
+              From tap to arrival — we handle everything so you can focus on what matters most.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 relative">
+            <div className="hidden md:block absolute top-12 left-[18%] right-[18%] h-px border-t border-dashed border-gray-200" />
+            {steps.map((step, i) => {
+              const Icon = step.icon
+              return (
+                <div key={step.num} className="flex flex-col items-center text-center">
+                  <div className="relative mb-6">
+                    <div className="w-24 h-24 bg-gray-50 border-2 border-gray-100 rounded-2xl flex items-center justify-center">
+                      <div className="w-14 h-14 bg-[#C8102E] rounded-xl flex items-center justify-center shadow-lg shadow-[#C8102E]/20">
+                        <Icon size={26} className="text-white" />
+                      </div>
+                    </div>
+                    <div className="absolute -top-2 -right-2 w-7 h-7 bg-white border-2 border-gray-100 rounded-full flex items-center justify-center shadow-sm">
+                      <span className="text-[10px] font-black text-[#C8102E]" style={{ fontFamily: "'JetBrains Mono', monospace" }}>{step.num}</span>
+                    </div>
+                  </div>
+                  <h3 className="font-bold text-gray-900 mb-2 text-lg">{step.title}</h3>
+                  <p className="text-sm text-gray-500 leading-relaxed max-w-[200px]">{step.desc}</p>
+                  {i < steps.length - 1 && (
+                    <div className="md:hidden mt-6 text-gray-200">
+                      <ChevronRight size={20} className="rotate-90 mx-auto" />
                     </div>
                   )}
                 </div>
-                <button className="shrink-0 w-9 h-9 bg-red-50 dark:bg-red-900/20 rounded-lg flex items-center justify-center text-red-600 hover:bg-red-100 transition-colors">
-                  <ChevronRight size={18} />
-                </button>
-              </div>
-            )
-          })}
-        </div>
-
-        {services.length === 0 && !loading && !error && (
-          <div className="text-center py-12">
-            <MapPin size={40} className="mx-auto text-gray-300 dark:text-gray-700 mb-3" />
-            <p className="text-gray-500 dark:text-gray-400 text-sm">No services found nearby</p>
+              )
+            })}
           </div>
-        )}
-      </div>
 
-      {/* Quick Stats */}
-      <div className="px-4 mt-6 grid grid-cols-3 gap-3">
-        <div className="card text-center py-4">
-          <Clock size={20} className="mx-auto text-red-500 mb-1" />
-          <p className="text-lg font-bold text-gray-900 dark:text-white">&lt;5m</p>
-          <p className="text-[10px] text-gray-500">Avg Response</p>
+          <div className="mt-14 text-center">
+            <button
+              onClick={handleEmergency}
+              id="how-it-works-cta"
+              className="inline-flex items-center gap-2.5 bg-[#C8102E] hover:bg-[#a50d26] text-white font-bold px-8 py-4 rounded-xl shadow-lg shadow-[#C8102E]/20 transition-all duration-200 active:scale-95 text-base"
+            >
+              <Ambulance size={18} />
+              Try It Now
+              <ArrowRight size={16} />
+            </button>
+            <p className="text-xs text-gray-400 mt-3">Works best with location access enabled</p>
+          </div>
         </div>
-        <div className="card text-center py-4">
-          <Ambulance size={20} className="mx-auto text-blue-500 mb-1" />
-          <p className="text-lg font-bold text-gray-900 dark:text-white">500+</p>
-          <p className="text-[10px] text-gray-500">Ambulances</p>
-        </div>
-        <div className="card text-center py-4">
-          <Phone size={20} className="mx-auto text-green-500 mb-1" />
-          <p className="text-lg font-bold text-gray-900 dark:text-white">24/7</p>
-          <p className="text-[10px] text-gray-500">Support</p>
-        </div>
-      </div>
+      </section>
 
-      {selectedService && (
-        <div className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/50 backdrop-blur-sm">
-          <div className="bg-white dark:bg-gray-900 w-full max-w-lg rounded-t-3xl sm:rounded-3xl overflow-hidden shadow-2xl">
-            {/* Header Image/Icon */}
-            <div className={`h-32 relative flex items-center justify-center ${serviceIcons[serviceType].color}`}>
-              <div className="absolute top-4 right-4 bg-amber-500 text-white text-[10px] font-bold px-2 py-1 rounded-full shadow-sm z-10">
-                DEMO MODE
-              </div>
-              <div className="relative">
-                {(() => {
-                  const Icon = serviceIcons[serviceType].icon
-                  return <Icon size={48} className={serviceIcons[serviceType].hex.includes('ef4444') ? 'text-red-500' : serviceIcons[serviceType].hex.includes('3b82f6') ? 'text-blue-500' : serviceIcons[serviceType].hex.includes('f59e0b') ? 'text-amber-500' : 'text-green-500'} />
-                })()}
-              </div>
-            </div>
+      {/* ─── TOP DOCTOR RECOMMENDATIONS ───────────────────────────────────── */}
+      <section className="py-20 px-4 bg-gray-50">
+        <div className="max-w-5xl mx-auto">
+          <div className="flex flex-col items-center text-center mb-12">
+            <span className="text-xs font-bold uppercase tracking-widest text-[#C8102E] mb-3" style={{ fontFamily: "'JetBrains Mono', monospace" }}>TOP DOCTORS</span>
+            <h2 className="text-3xl sm:text-4xl font-extrabold text-gray-900 mb-4">Trusted specialists, nearby</h2>
+            <p className="text-gray-500 max-w-md text-base" style={{ fontFamily: "'Basic', serif" }}>
+              Book an appointment with a verified specialist in minutes.
+            </p>
+          </div>
 
-            <div className="p-6">
-              <div className="flex justify-between items-start mb-4">
-                <div className="min-w-0 flex-1">
-                  <h2 className="text-2xl font-bold text-gray-900 dark:text-white truncate">{selectedService.name}</h2>
-                  <div className="flex items-center gap-2 mt-1">
-                    <span className="flex items-center gap-1 text-sm text-amber-600 font-bold">
-                      <Star size={14} fill="currentColor" />
-                      {selectedService.rating || '4.5'}
-                    </span>
-                    <span className="text-gray-300">•</span>
-                    <span className="text-sm text-gray-500 font-medium uppercase">{serviceType}</span>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {topDoctors.map((doc) => (
+              <div
+                key={doc.id}
+                className="bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-lg hover:-translate-y-1.5 transition-all duration-300 overflow-hidden group"
+              >
+                {/* Avatar */}
+                <div className="p-5 flex flex-col items-center border-b border-gray-50">
+                  <div className="w-16 h-16 rounded-2xl bg-[#C8102E] flex items-center justify-center text-2xl font-black text-white shadow-md shadow-[#C8102E]/20 mb-3 group-hover:scale-110 transition-transform duration-300">
+                    {doc.initials}
                   </div>
-                </div>
-                <button 
-                  onClick={() => setSelectedService(null)}
-                  className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors ml-4 text-gray-500"
-                  aria-label="Close modal"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-                </button>
-              </div>
-
-              <div className="space-y-4">
-                <div className="flex items-start gap-3">
-                  <MapPin className="text-red-500 mt-1 shrink-0" size={18} />
-                  <p className="text-sm text-gray-600 dark:text-gray-400">{selectedService.address || 'Address information not available'}</p>
-                </div>
-                
-                <div className="flex items-center gap-3">
-                  <Phone className="text-green-500 shrink-0" size={18} />
-                  <p className="text-sm font-semibold text-gray-700 dark:text-gray-300">{selectedService.phone || '999-000-DEMO'}</p>
+                  <span className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full ${doc.availableToday ? 'bg-emerald-50 text-emerald-700' : 'bg-gray-100 text-gray-400'}`}>
+                    {doc.availableToday ? '● Available Today' : '○ Unavailable'}
+                  </span>
                 </div>
 
-                <div className="bg-amber-50 dark:bg-amber-900/10 border border-amber-100 dark:border-amber-900/30 p-3 rounded-xl">
-                  <p className="text-xs text-amber-700 dark:text-amber-400 flex items-center gap-2">
-                    <Shield size={14} className="shrink-0" />
-                    <span><strong>Simulation Mode:</strong> No real emergency services will be dispatched during this demo session.</span>
-                  </p>
+                <div className="p-4">
+                  <h3 className="font-bold text-gray-900 text-sm leading-tight">{doc.name}</h3>
+                  <p className="text-xs text-[#C8102E] font-semibold mt-0.5">{doc.specialty}</p>
+                  <p className="text-[11px] text-gray-400 mt-0.5">{doc.hospital} · {doc.experience}</p>
+
+                  <div className="flex items-center justify-between mt-3 mb-4">
+                    <div className="flex items-center gap-1">
+                      <Star size={12} fill="#f59e0b" className="text-amber-400" />
+                      <span className="text-xs font-bold text-gray-700">{doc.rating}</span>
+                    </div>
+                    <span className="text-xs font-bold text-gray-900">{doc.fee}</span>
+                  </div>
+
+                  <button
+                    onClick={() => navigate('/doctors')}
+                    className="w-full bg-[#C8102E] hover:bg-[#a50d26] text-white text-xs font-bold py-2.5 rounded-xl flex items-center justify-center gap-1.5 transition-all active:scale-95 shadow-sm shadow-[#C8102E]/15"
+                  >
+                    <Calendar size={13} />
+                    Book Appointment
+                  </button>
                 </div>
               </div>
+            ))}
+          </div>
 
-              <div className="grid grid-cols-2 gap-3 mt-8">
-                <button 
-                  onClick={() => handleGetDirections(selectedService)}
-                  className="py-3 px-4 bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white font-bold rounded-xl hover:bg-gray-200 transition-all active:scale-95 flex items-center justify-center gap-2 shadow-sm"
-                >
-                  <Navigation size={18} />
-                  Directions
-                </button>
-                <button 
-                  onClick={() => {
-                    alert('Simulation: Requesting service from ' + selectedService.name)
-                    setSelectedService(null)
-                  }}
-                  className="py-3 px-4 bg-red-600 text-white font-bold rounded-xl shadow-lg shadow-red-500/20 hover:bg-red-700 transition-all active:scale-95 flex items-center justify-center gap-2"
-                >
-                  <Ambulance size={18} />
-                  Book Demo
-                </button>
+          <div className="text-center mt-8">
+            <button
+              onClick={() => navigate('/doctors')}
+              className="inline-flex items-center gap-2 text-sm font-semibold text-[#C8102E] hover:gap-3 transition-all"
+            >
+              View all doctors
+              <ArrowRight size={16} />
+            </button>
+          </div>
+        </div>
+      </section>
+
+      {/* ─── EMERGENCY HELPLINES ──────────────────────────────────────────── */}
+      <section className="py-16 px-4 bg-white border-y border-gray-100">
+        <div className="max-w-4xl mx-auto">
+          <div className="flex flex-col items-center text-center mb-10">
+            <div className="w-12 h-12 bg-[#C8102E] rounded-2xl flex items-center justify-center mb-4 shadow-md shadow-[#C8102E]/20">
+              <Phone size={22} className="text-white" />
+            </div>
+            <h2 className="text-2xl sm:text-3xl font-extrabold text-gray-900 mb-2">India Emergency Helplines</h2>
+            <p className="text-xs text-gray-400">Tap to call — always free, always available</p>
+          </div>
+
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 max-w-2xl mx-auto">
+            {helplines.map((h) => (
+              <a
+                key={h.number}
+                href={`tel:${h.number}`}
+                className={`${h.cardBg} ${h.border} border rounded-2xl p-4 flex flex-col items-center gap-2 hover:shadow-md hover:-translate-y-1 transition-all duration-200 group`}
+              >
+                <div className={`w-10 h-10 ${h.iconBg} rounded-xl flex items-center justify-center shadow-sm`}>
+                  <Phone size={17} className="text-white" />
+                </div>
+                <div className="text-center">
+                  <p className="text-2xl font-black text-gray-900">{h.number}</p>
+                  <p className="text-[10px] text-gray-500">{h.label}</p>
+                </div>
+              </a>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ─── TEAM ─────────────────────────────────────────────────────────── */}
+      <section className="py-20 px-4 bg-gray-50">
+        <div className="max-w-4xl mx-auto">
+          <div className="flex flex-col items-center text-center mb-12">
+            <span className="text-xs font-bold uppercase tracking-widest text-[#C8102E] mb-3" style={{ fontFamily: "'JetBrains Mono', monospace" }}>THE TEAM</span>
+            <h2 className="text-3xl sm:text-4xl font-extrabold text-gray-900 mb-4">Built with purpose</h2>
+            <p className="text-gray-500 max-w-md text-base" style={{ fontFamily: "'Basic', serif" }}>
+              We are the <strong>LifeLine+</strong> team — built for rapid emergency response across India.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            {[
+              { name: 'Babin Bid', role: 'Team Lead & Architecture', initials: 'BB' },
+              { name: 'Atanu Saha', role: 'Frontend Developer', initials: 'AS' },
+              { name: 'Rohit Kumar Adak', role: 'Idea & Backend Dev', initials: 'RK' },
+              { name: 'Sagnik Bachhar', role: 'Research & Developer', initials: 'SB' },
+            ].map((m) => (
+              <div key={m.name} className="flex flex-col items-center text-center p-5 rounded-2xl bg-white border border-gray-100 hover:border-[#C8102E]/20 hover:shadow-md hover:-translate-y-1 transition-all duration-200 group">
+                <div className="w-14 h-14 rounded-2xl bg-[#C8102E] flex items-center justify-center text-white font-black text-lg mb-3 shadow-md shadow-[#C8102E]/15 group-hover:scale-110 transition-transform">
+                  {m.initials}
+                </div>
+                <p className="text-sm font-bold text-gray-900 leading-tight">{m.name}</p>
+                <p className="text-[10px] text-gray-400 mt-1 leading-tight">{m.role}</p>
               </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ─── CONTACT US ───────────────────────────────────────────────────── */}
+      <section id="contact" className="py-20 px-4 bg-white">
+        <div className="max-w-4xl mx-auto">
+          <div className="flex flex-col items-center text-center mb-12">
+            <span className="text-xs font-bold uppercase tracking-widest text-[#C8102E] mb-3" style={{ fontFamily: "'JetBrains Mono', monospace" }}>CONTACT US</span>
+            <h2 className="text-3xl sm:text-4xl font-extrabold text-gray-900 mb-4">We are here 24/7</h2>
+            <p className="text-gray-500 max-w-md text-base" style={{ fontFamily: "'Basic', serif" }}>
+              For emergencies, feedback, partnerships, or technical support — reach us anytime.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-10 max-w-3xl mx-auto">
+            <div className="space-y-4">
+              <h3 className="font-bold text-gray-900 text-base mb-5">Get in touch</h3>
+              {[
+                { icon: Phone, label: 'Emergency Helpline', value: '108 / 112 — Toll Free', href: 'tel:108', bg: 'bg-red-50', color: 'text-[#C8102E]' },
+                { icon: Mail, label: 'Email Support', value: 'support@lifelineplus.in', href: 'mailto:support@lifelineplus.in', bg: 'bg-blue-50', color: 'text-blue-600' },
+                { icon: MapPin, label: 'Headquarters', value: 'Kolkata, West Bengal, India', href: null, bg: 'bg-gray-50', color: 'text-gray-600' },
+              ].map((c) => {
+                const Icon = c.icon
+                const inner = (
+                  <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-2xl border border-gray-100 hover:shadow-sm transition-all">
+                    <div className={`w-10 h-10 ${c.bg} rounded-xl flex items-center justify-center shrink-0`}>
+                      <Icon size={17} className={c.color} />
+                    </div>
+                    <div>
+                      <p className="text-[11px] text-gray-400">{c.label}</p>
+                      <p className="text-sm font-semibold text-gray-800">{c.value}</p>
+                    </div>
+                  </div>
+                )
+                return c.href ? <a key={c.label} href={c.href}>{inner}</a> : <div key={c.label}>{inner}</div>
+              })}
+            </div>
+
+            <div>
+              <h3 className="font-bold text-gray-900 text-base mb-5">Send a message</h3>
+              {sent ? (
+                <div className="bg-gray-50 border border-gray-100 rounded-2xl p-10 text-center">
+                  <div className="w-14 h-14 bg-emerald-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <CheckCircle size={28} className="text-emerald-500" />
+                  </div>
+                  <h4 className="font-bold text-gray-900 mb-1">Message Sent!</h4>
+                  <p className="text-xs text-gray-400">We will get back to you shortly.</p>
+                </div>
+              ) : (
+                <form onSubmit={handleContactSubmit} className="bg-gray-50 border border-gray-100 rounded-2xl p-5 space-y-3">
+                  <input id="contact-name" className="input-field" placeholder="Your Name" value={form.name} onChange={(e) => setForm(f => ({ ...f, name: e.target.value }))} required />
+                  <input id="contact-email" className="input-field" type="email" placeholder="Email Address" value={form.email} onChange={(e) => setForm(f => ({ ...f, email: e.target.value }))} required />
+                  <textarea id="contact-message" className="input-field min-h-[100px] resize-none" placeholder="Your message..." value={form.message} onChange={(e) => setForm(f => ({ ...f, message: e.target.value }))} required />
+                  <button type="submit" id="contact-submit" className="w-full bg-[#C8102E] hover:bg-[#a50d26] text-white font-bold py-3 rounded-xl flex items-center justify-center gap-2 transition-all active:scale-95 shadow-sm shadow-[#C8102E]/15">
+                    <Send size={16} />
+                    Send Message
+                  </button>
+                </form>
+              )}
             </div>
           </div>
         </div>
-      )}
+      </section>
 
+      <div className="pb-8" />
       {showLogin && <LoginModal onClose={() => setShowLogin(false)} />}
     </div>
   )
