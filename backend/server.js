@@ -24,11 +24,13 @@ getFirebaseAdmin();
 const app = express();
 const httpServer = createServer(app);
 
-// Dynamic CORS origin matching
+// Dynamic CORS origin matching - allows both deployed and local development
 const allowedOrigins = [
   'https://lifeline-frontend-240882103415.us-central1.run.app',
   'http://localhost:5173',
-  'http://localhost:3000'
+  'http://localhost:3000',
+  'http://127.0.0.1:5173',
+  'http://127.0.0.1:3000'
 ];
 
 const corsOptions = {
@@ -36,19 +38,23 @@ const corsOptions = {
     // Allow requests with no origin (like mobile apps or curl)
     if (!origin) return callback(null, true);
     
-    const isAllowed = allowedOrigins.some(allowed => origin.startsWith(allowed)) || 
-                     origin.includes('localhost') || 
-                     origin.includes('127.0.0.1');
+    // Check if origin is in allowed list or is a localhost variant
+    const isAllowed = allowedOrigins.includes(origin) || 
+                     origin.startsWith('http://localhost:') || 
+                     origin.startsWith('http://127.0.0.1:');
                      
     if (isAllowed) {
-      callback(null, true);
+      // Return the specific origin to set proper Access-Control-Allow-Origin header
+      callback(null, origin);
     } else {
+      console.warn(`CORS blocked origin: ${origin}`);
       callback(new Error('Not allowed by CORS'));
     }
   },
   credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin'],
+  exposedHeaders: ['Content-Range', 'X-Content-Range']
 };
 
 const io = new Server(httpServer, {
