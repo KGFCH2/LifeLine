@@ -60,7 +60,7 @@ export default function Footer() {
               target="_blank"
               rel="noopener noreferrer"
               aria-label="GitHub"
-              className="w-9 h-9 rounded-xl bg-gray-100 flex items-center justify-center text-gray-600 hover:bg-[#C8102E] hover:text-white transition-all duration-300 hover:shadow-lg hover:shadow-[#C8102E]/25 inline-flex"
+              className="w-9 h-9 rounded-xl bg-gray-100 flex items-center justify-center text-gray-600 hover:bg-[#C8102E] hover:text-white transition-all duration-300 hover:shadow-lg hover:shadow-[#C8102E]/25"
             >
               <Github size={18} />
             </a>
