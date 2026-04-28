@@ -3,6 +3,46 @@ import { googlePhotoUrl, nearbySearch, normalizePlace, placeDetails } from '../l
 
 const router = express.Router();
 
+const FALLBACK_SERVICE_NAMES = {
+  hospital: ['City Hospital', 'Metro Care Hospital', 'LifeLine Medical Center', 'Apollo Emergency Clinic', 'General Hospital'],
+  police: ['Police Station', 'Traffic Police Station', 'Public Safety Office', 'City Control Room', 'Law Enforcement Center'],
+  doctor: ['Dr. Sharma Clinic', 'City Health Clinic', 'Family Care Center', 'General Physician Hub', 'Emergency Doctor Unit'],
+  pharmacy: ['24x7 Pharmacy', 'HealthPlus Pharmacy', 'Care Drug Store', 'MediPoint Pharmacy', 'City Pharmacy'],
+  health: ['Health Center', 'Wellness Clinic', 'Community Health Unit', 'Emergency Care Point', 'Primary Health Center']
+};
+
+function seedServices(lat, lng, type) {
+  const originLat = Number(lat);
+  const originLng = Number(lng);
+  const names = FALLBACK_SERVICE_NAMES[type] || FALLBACK_SERVICE_NAMES.hospital;
+
+  return names.map((name, index) => {
+    const delta = 0.01 + index * 0.003;
+    const location = {
+      lat: originLat + (index % 2 === 0 ? delta : -delta),
+      lng: originLng + (index % 2 === 0 ? -delta : delta)
+    };
+
+    return {
+      id: `${type.toUpperCase()}-FALLBACK-${index + 1}`,
+      name,
+      location,
+      address: `${name}, Nearby area`,
+      rating: 4.1 + ((index % 3) * 0.2),
+      totalRatings: 25 + index * 11,
+      openNow: index % 4 !== 3,
+      businessStatus: 'OPERATIONAL',
+      types: [type],
+      photoReference: null,
+      distance: Number.isFinite(originLat) && Number.isFinite(originLng)
+        ? Math.sqrt((location.lat - originLat) ** 2 + (location.lng - originLng) ** 2) * 111
+        : null,
+      photo: null,
+      source: 'fallback'
+    };
+  });
+}
+
 router.get('/', async (req, res) => {
   try {
     const {
@@ -25,21 +65,33 @@ router.get('/', async (req, res) => {
     const validTypes = ['hospital', 'police', 'doctor', 'pharmacy', 'health'];
     if (!validTypes.includes(placeType)) placeType = 'hospital';
 
-    const places = await nearbySearch({
-      lat,
-      lng,
-      type: placeType,
-      radius,
-      keyword: specialty || keyword || (placeType === 'doctor' ? 'doctor clinic' : undefined)
-    });
+    let results = [];
 
-    let results = places.map(place => {
-      const normalized = normalizePlace(place, { lat, lng });
-      return {
-        ...normalized,
-        photo: googlePhotoUrl(normalized.photoReference)
-      };
-    });
+    try {
+      const places = await nearbySearch({
+        lat,
+        lng,
+        type: placeType,
+        radius,
+        keyword: specialty || keyword || (placeType === 'doctor' ? 'doctor clinic' : undefined)
+      });
+
+      results = places.map(place => {
+        const normalized = normalizePlace(place, { lat, lng });
+        return {
+          ...normalized,
+          photo: googlePhotoUrl(normalized.photoReference),
+          source: 'google_places'
+        };
+      });
+    } catch (error) {
+      console.warn('Nearby services fallback:', error.message, error.details || '');
+      results = seedServices(lat, lng, placeType);
+    }
+
+    if (!results.length) {
+      results = seedServices(lat, lng, placeType);
+    }
 
     if (minRating) {
       const threshold = Number(minRating);
@@ -59,6 +111,7 @@ router.get('/', async (req, res) => {
     res.json({
       count: results.length,
       type: placeType,
+      source: results[0]?.source || 'google_places',
       center: { lat: parseFloat(lat), lng: parseFloat(lng) },
       filters: {
         radius: Number(radius),

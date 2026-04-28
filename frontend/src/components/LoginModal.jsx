@@ -157,8 +157,6 @@ export default function LoginModal({ onClose }) {
         lastSigninAt: signinData.user.lastSigninAt,
         status: signinData.user.status
       })
-
-      await signOut(auth).catch(() => {})
       
       setLoading(false)
       onClose()

@@ -183,7 +183,6 @@ export default function Signup() {
       console.log('✅ [Google Signup] User saved to Firestore:', responseData)
 
       await login(userData)
-      await signOut(auth).catch(() => {})
       
       console.log('✅ [Google Signup] Account created and signed in successfully')
       
