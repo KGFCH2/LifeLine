@@ -303,3 +303,6 @@ We are the **LifeLine+** team, participating in the **Google Solution Challenge 
 LifeLine+ is built for rapid coordination, but life-threatening emergencies should still call official Indian emergency numbers such as `108` or `112` immediately.
 
 **Built with ❤️ for faster emergency response in India.**
+  
+## License  
+This project is licensed under the [LICENSE](LICENSE) file. 

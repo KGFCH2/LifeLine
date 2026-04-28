@@ -23,9 +23,17 @@ getFirebaseAdmin();
 
 const app = express();
 const httpServer = createServer(app);
+
+// Allow multiple origins: local dev and deployed frontend
+const allowedOrigins = [
+  process.env.FRONTEND_URL || 'http://localhost:5173',
+  'https://lifeline-frontend-240882103415.us-central1.run.app',
+  'http://localhost:5173'
+].filter(Boolean);
+
 const io = new Server(httpServer, {
   cors: {
-    origin: process.env.FRONTEND_URL || 'http://localhost:5173',
+    origin: allowedOrigins,
     methods: ['GET', 'POST'],
     credentials: true
   }
@@ -35,7 +43,7 @@ app.use(helmet());
 app.use(compression());
 app.use(morgan('dev'));
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:5173',
+  origin: allowedOrigins,
   credentials: true
 }));
 app.use(express.json({ limit: '10mb' }));

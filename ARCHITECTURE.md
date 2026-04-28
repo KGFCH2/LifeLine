@@ -230,3 +230,6 @@ graph LR
 ```
 
 See [CORE_LOGIC.md](CORE_LOGIC.md) for process-level pipelines and [INSTRUCTIONS.md](INSTRUCTIONS.md) for file-by-file operations.
+  
+## License  
+This project is licensed under the [LICENSE](LICENSE) file. 

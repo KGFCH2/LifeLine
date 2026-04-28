@@ -110,6 +110,15 @@ export default function Signup() {
         body: JSON.stringify(userData)
       })
 
+      // Handle 404 - backend API not available, use demo mode
+      if (response.status === 404) {
+        console.log('⚠️ [Signup] Backend API not found, using demo mode')
+        await login({ ...userData, provider: 'demo' })
+        setSuccess(true)
+        setTimeout(() => navigate('/'), 2000)
+        return
+      }
+
       const responseData = await response.json()
 
       if (!response.ok) {
@@ -173,6 +182,16 @@ export default function Signup() {
         },
         body: JSON.stringify(userData)
       })
+
+      // Handle 404 - backend API not available, use demo mode
+      if (response.status === 404) {
+        console.log('⚠️ [Google Signup] Backend API not found, using demo mode')
+        await login({ ...userData, provider: 'demo' })
+        await signOut(auth).catch(() => {})
+        setSuccess(true)
+        setTimeout(() => navigate('/'), 2000)
+        return
+      }
 
       const responseData = await response.json()
 

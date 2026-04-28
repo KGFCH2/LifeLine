@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { signInWithPopup, signOut } from 'firebase/auth'
 import { useAuth } from '../context/AuthContext.jsx'
 import { auth, firebaseEnabled, googleProvider } from '../lib/firebase.js'
-import { X, Mail, User as UserIcon, ChevronRight, AlertCircle } from 'lucide-react'
+import { X, Mail, User as UserIcon, ChevronRight, AlertCircle, WifiOff } from 'lucide-react'
 import { Link } from 'react-router-dom'
 
 export default function LoginModal({ onClose }) {
@@ -13,6 +13,7 @@ export default function LoginModal({ onClose }) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [userNotFound, setUserNotFound] = useState(false)
+  const [backendUnavailable, setBackendUnavailable] = useState(false)
 
   const submitForm = async (e) => {
     e.preventDefault()
@@ -20,6 +21,7 @@ export default function LoginModal({ onClose }) {
     
     setLoading(true)
     setError('')
+    setBackendUnavailable(false)
     
     try {
       const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000'
@@ -33,6 +35,14 @@ export default function LoginModal({ onClose }) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email })
       })
+      
+      // Handle 404 - backend API not found
+      if (checkResponse.status === 404) {
+        console.log('⚠️ Backend API not found, switching to demo mode')
+        setBackendUnavailable(true)
+        setLoading(false)
+        return
+      }
       
       const checkData = await checkResponse.json()
       
@@ -52,6 +62,12 @@ export default function LoginModal({ onClose }) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email })
       })
+      
+      if (signinResponse.status === 404) {
+        setBackendUnavailable(true)
+        setLoading(false)
+        return
+      }
       
       const signinData = await signinResponse.json()
       
@@ -84,10 +100,33 @@ export default function LoginModal({ onClose }) {
     }
   }
 
+  // Demo mode login when backend is unavailable
+  const loginWithDemoMode = () => {
+    const demoUser = {
+      id: `demo-${Date.now()}`,
+      name: name || 'Demo User',
+      email: email || 'demo@lifelineplus.in',
+      phone: '',
+      address: '',
+      provider: 'demo',
+      photoURL: '',
+      createdAt: new Date().toISOString()
+    }
+    
+    // Store in localStorage for persistence
+    localStorage.setItem('lifeline_demo_user', JSON.stringify(demoUser))
+    
+    console.log('✅ Demo mode login:', demoUser)
+    login(demoUser)
+    setLoading(false)
+    onClose()
+  }
+
   const googleLogin = async () => {
     setMode('google')
     setLoading(true)
     setError('')
+    setBackendUnavailable(false)
 
     if (!firebaseEnabled || !auth || !googleProvider) {
       setLoading(false)
@@ -111,6 +150,16 @@ export default function LoginModal({ onClose }) {
         body: JSON.stringify({ email: result.user.email })
       })
       
+      // Handle 404 - backend API not found
+      if (checkResponse.status === 404) {
+        console.log('⚠️ Backend API not found, switching to demo mode')
+        setBackendUnavailable(true)
+        setMode('form')
+        await signOut(auth).catch(() => {})
+        setLoading(false)
+        return
+      }
+      
       const checkData = await checkResponse.json()
       
       if (!checkData.exists) {
@@ -131,6 +180,14 @@ export default function LoginModal({ onClose }) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: result.user.email })
       })
+      
+      if (signinResponse.status === 404) {
+        setBackendUnavailable(true)
+        setMode('form')
+        await signOut(auth).catch(() => {})
+        setLoading(false)
+        return
+      }
       
       const signinData = await signinResponse.json()
       
@@ -205,6 +262,27 @@ export default function LoginModal({ onClose }) {
                     </Link>
                   )}
                 </div>
+              </div>
+            )}
+
+            {backendUnavailable && (
+              <div className="mb-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-4">
+                <div className="flex items-start gap-3 mb-3">
+                  <WifiOff size={18} className="text-amber-600 flex-shrink-0 mt-0.5" />
+                  <div className="flex-1">
+                    <p className="text-sm font-semibold text-amber-800">Backend server unavailable</p>
+                    <p className="text-xs text-amber-700 mt-1">
+                      The authentication API is not reachable. You can use Demo Mode to explore the app.
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={loginWithDemoMode}
+                  disabled={loading}
+                  className="w-full bg-amber-100 hover:bg-amber-200 text-amber-800 font-semibold py-2.5 rounded-lg transition-all active:scale-95 text-sm"
+                >
+                  {loading ? 'Loading...' : 'Continue in Demo Mode'}
+                </button>
               </div>
             )}
 

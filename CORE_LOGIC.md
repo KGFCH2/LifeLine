@@ -160,3 +160,6 @@ flowchart TD
 ```
 
 Connected docs: [README.md](README.md), [INSTRUCTIONS.md](INSTRUCTIONS.md), [ARCHITECTURE.md](ARCHITECTURE.md), and [LICENSE](LICENSE).
+  
+## License  
+This project is licensed under the [LICENSE](LICENSE) file. 

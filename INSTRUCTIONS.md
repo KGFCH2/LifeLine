@@ -264,3 +264,6 @@ gcloud run deploy lifeline-frontend \
 | AI verification fails | Check `GEMINI_API_KEY`; model name is `gemini-1.5-flash` |
 | Build fails | Use Node >= 18; frontend uses `type: "module"` |
 | Firebase popup blocked | Ensure Firebase authorized domains include `localhost` and deployed domain |
+  
+## License  
+This project is licensed under the [LICENSE](LICENSE) file. 
