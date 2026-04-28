@@ -152,32 +152,33 @@ export default function Home() {
     }
   }
 
-  const handleGetDirections = async (service) => {
+  const handleGetDirections = (service) => {
     if (!location || !service?.location) return
-    setLoading(true)
-    try {
-      const params = new URLSearchParams({
-        originLat: String(location.lat),
-        originLng: String(location.lng),
-        destLat: String(service.location.lat),
-        destLng: String(service.location.lng)
-      })
-      const res = await fetch(`${BACKEND_URL}/api/routes/emergency?${params.toString()}`)
-      const data = await res.json()
-      if (data.routes && data.routes.length > 0) {
-        setRoutes(data.routes)
-        setActiveRoute(data.routes[0])
-        setSelectedService(null) // Close modal to show map
-      } else {
-        const errorMsg = data.message || data.details || data.error || 'Unknown error'
-        alert(`Could not calculate a route: ${errorMsg}. Please ensure your API key has Directions API enabled and Billing is active.`)
-      }
-    } catch (err) {
-      console.error('Routing error:', err)
-      alert('Unable to connect to routing service.')
-    } finally {
-      setLoading(false)
+    
+    // Generate an illustrative path (curved)
+    const points = []
+    const steps = 20
+    for (let i = 0; i <= steps; i++) {
+      const t = i / steps
+      const lat = location.lat + (service.location.lat - location.lat) * t
+      const lng = location.lng + (service.location.lng - location.lng) * t
+      // Add a slight curve for illustration
+      const curve = Math.sin(t * Math.PI) * 0.002
+      points.push({ lat: lat + curve, lng: lng + curve })
     }
+
+    const illustrativeRoute = {
+      id: `route-${service.id}`,
+      path: points,
+      distance: `${service.distance?.toFixed(1) || '1.2'} km`,
+      duration: `${Math.round((service.distance || 1.2) * 4)} mins`,
+      summary: 'Tactical Illustration Path',
+      type: 'illustrative'
+    }
+
+    setRoutes([illustrativeRoute])
+    setActiveRoute(illustrativeRoute)
+    setSelectedService(null) // Close modal to show map
   }
 
   return (

@@ -333,23 +333,43 @@ export default function MapView({
     routeLinesRef.current = []
 
     routes.forEach((route, idx) => {
-      if (!route.polyline) return
-      const decoded = window.google.maps.geometry.encoding.decodePath(route.polyline)
+      let path;
+      if (route.polyline) {
+        path = window.google.maps.geometry.encoding.decodePath(route.polyline)
+      } else if (route.path) {
+        path = route.path
+      } else {
+        return
+      }
+
       const line = new window.google.maps.Polyline({
-        path: decoded,
+        path: path,
         map: mapRef.current,
-        strokeColor: route.fastest ? '#16a34a' : idx === 0 ? '#3b82f6' : '#6b7280',
-        strokeOpacity: route.fastest ? 1 : 0.6,
-        strokeWeight: route.fastest ? 5 : 3
+        strokeColor: route.type === 'illustrative' ? '#3b82f6' : (route.fastest ? '#16a34a' : idx === 0 ? '#3b82f6' : '#6b7280'),
+        strokeOpacity: route.type === 'illustrative' ? 0.8 : (route.fastest ? 1 : 0.6),
+        strokeWeight: route.type === 'illustrative' ? 4 : (route.fastest ? 5 : 3),
+        icons: route.type === 'illustrative' ? [{
+          icon: { path: 'M 0,-1 0,1', strokeOpacity: 1, scale: 3 },
+          offset: '0',
+          repeat: '20px'
+        }] : null
       })
       routeLinesRef.current.push(line)
     })
 
-    if (activeRoute && activeRoute.polyline) {
-      const decoded = window.google.maps.geometry.encoding.decodePath(activeRoute.polyline)
-      const bounds = new window.google.maps.LatLngBounds()
-      decoded.forEach(p => bounds.extend(p))
-      mapRef.current.fitBounds(bounds)
+    if (activeRoute) {
+      let path;
+      if (activeRoute.polyline) {
+        path = window.google.maps.geometry.encoding.decodePath(activeRoute.polyline)
+      } else if (activeRoute.path) {
+        path = activeRoute.path
+      }
+
+      if (path) {
+        const bounds = new window.google.maps.LatLngBounds()
+        path.forEach(p => bounds.extend(p))
+        mapRef.current.fitBounds(bounds)
+      }
     }
   }, [routes, activeRoute, mapLoaded])
 
