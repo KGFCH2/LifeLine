@@ -218,14 +218,14 @@ export default function Home() {
           <button
             onClick={() => handleServiceTypeChange('hospital')}
             disabled={loading}
-            className={`p-4 rounded-2xl text-center transition-all duration-200 border-2 ${
+            className={`group p-4 rounded-2xl text-center transition-all duration-300 border-2 card-hover active:scale-95 ${
               serviceType === 'hospital'
-                ? 'bg-red-500 border-red-500 text-white shadow-lg shadow-red-200 dark:shadow-none'
-                : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 border-gray-100 dark:border-gray-700 hover:border-red-200 dark:hover:border-red-900/30 hover:bg-red-50/50 dark:hover:bg-red-900/10'
+                ? 'bg-red-500 border-red-500 text-white shadow-lg shadow-red-500/20'
+                : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 border-gray-100 dark:border-gray-700 hover:border-red-200 dark:hover:border-red-900/30'
             } ${loading ? 'opacity-60' : ''}`}
           >
-            <div className={`w-14 h-14 mx-auto rounded-full flex items-center justify-center mb-2 transition-colors ${
-              serviceType === 'hospital' ? 'bg-white/20' : 'bg-red-50 dark:bg-red-900/20 text-red-500'
+            <div className={`w-14 h-14 mx-auto rounded-full flex items-center justify-center mb-2 transition-all duration-300 icon-pop ${
+              serviceType === 'hospital' ? 'bg-white/20' : 'bg-red-50 dark:bg-red-900/20 text-red-500 shadow-sm group-hover:shadow-red-500/20'
             }`}>
               <Siren size={28} strokeWidth={2.5} />
             </div>
@@ -236,14 +236,14 @@ export default function Home() {
           <button
             onClick={() => handleServiceTypeChange('police')}
             disabled={loading}
-            className={`p-4 rounded-2xl text-center transition-all duration-200 border-2 ${
+            className={`group p-4 rounded-2xl text-center transition-all duration-300 border-2 card-hover active:scale-95 ${
               serviceType === 'police'
-                ? 'bg-blue-500 border-blue-500 text-white shadow-lg shadow-blue-200 dark:shadow-none'
-                : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 border-gray-100 dark:border-gray-700 hover:border-blue-200 dark:hover:border-blue-900/30 hover:bg-blue-50/50 dark:hover:bg-blue-900/10'
+                ? 'bg-blue-500 border-blue-500 text-white shadow-lg shadow-blue-500/20'
+                : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 border-gray-100 dark:border-gray-700 hover:border-blue-200 dark:hover:border-blue-900/30'
             } ${loading ? 'opacity-60' : ''}`}
           >
-            <div className={`w-14 h-14 mx-auto rounded-full flex items-center justify-center mb-2 transition-colors ${
-              serviceType === 'police' ? 'bg-white/20' : 'bg-blue-50 dark:bg-blue-900/20 text-blue-500'
+            <div className={`w-14 h-14 mx-auto rounded-full flex items-center justify-center mb-2 transition-all duration-300 icon-pop ${
+              serviceType === 'police' ? 'bg-white/20' : 'bg-blue-50 dark:bg-blue-900/20 text-blue-500 shadow-sm group-hover:shadow-blue-500/20'
             }`}>
               <Shield size={28} strokeWidth={2.5} />
             </div>
@@ -254,14 +254,14 @@ export default function Home() {
           <button
             onClick={() => handleServiceTypeChange('doctor')}
             disabled={loading}
-            className={`p-4 rounded-2xl text-center transition-all duration-200 border-2 ${
+            className={`group p-4 rounded-2xl text-center transition-all duration-300 border-2 card-hover active:scale-95 ${
               serviceType === 'doctor'
-                ? 'bg-amber-500 border-amber-500 text-white shadow-lg shadow-amber-200 dark:shadow-none'
-                : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 border-gray-100 dark:border-gray-700 hover:border-amber-200 dark:hover:border-amber-900/30 hover:bg-amber-50/50 dark:hover:bg-amber-900/10'
+                ? 'bg-amber-500 border-amber-500 text-white shadow-lg shadow-amber-500/20'
+                : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 border-gray-100 dark:border-gray-700 hover:border-amber-200 dark:hover:border-amber-900/30'
             } ${loading ? 'opacity-60' : ''}`}
           >
-            <div className={`w-14 h-14 mx-auto rounded-full flex items-center justify-center mb-2 transition-colors ${
-              serviceType === 'doctor' ? 'bg-white/20' : 'bg-amber-50 dark:bg-amber-900/20 text-amber-500'
+            <div className={`w-14 h-14 mx-auto rounded-full flex items-center justify-center mb-2 transition-all duration-300 icon-pop ${
+              serviceType === 'doctor' ? 'bg-white/20' : 'bg-amber-50 dark:bg-amber-900/20 text-amber-500 shadow-sm group-hover:shadow-amber-500/20'
             }`}>
               <Stethoscope size={28} strokeWidth={2.5} />
             </div>
@@ -272,14 +272,14 @@ export default function Home() {
           <button
             onClick={() => handleServiceTypeChange('pharmacy')}
             disabled={loading}
-            className={`p-4 rounded-2xl text-center transition-all duration-200 border-2 ${
+            className={`group p-4 rounded-2xl text-center transition-all duration-300 border-2 card-hover active:scale-95 ${
               serviceType === 'pharmacy'
-                ? 'bg-green-500 border-green-500 text-white shadow-lg shadow-green-200 dark:shadow-none'
-                : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 border-gray-100 dark:border-gray-700 hover:border-green-200 dark:hover:border-green-900/30 hover:bg-green-50/50 dark:hover:bg-green-900/10'
+                ? 'bg-green-500 border-green-500 text-white shadow-lg shadow-green-500/20'
+                : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 border-gray-100 dark:border-gray-700 hover:border-green-200 dark:hover:border-green-900/30'
             } ${loading ? 'opacity-60' : ''}`}
           >
-            <div className={`w-14 h-14 mx-auto rounded-full flex items-center justify-center mb-2 transition-colors ${
-              serviceType === 'pharmacy' ? 'bg-white/20' : 'bg-green-50 dark:bg-green-900/20 text-green-500'
+            <div className={`w-14 h-14 mx-auto rounded-full flex items-center justify-center mb-2 transition-all duration-300 icon-pop ${
+              serviceType === 'pharmacy' ? 'bg-white/20' : 'bg-green-50 dark:bg-green-900/20 text-green-500 shadow-sm group-hover:shadow-green-500/20'
             }`}>
               <Pill size={28} strokeWidth={2.5} />
             </div>
@@ -535,7 +535,7 @@ export default function Home() {
               <div className="grid grid-cols-2 gap-3 mt-8">
                 <button 
                   onClick={() => handleGetDirections(selectedService)}
-                  className="py-3 px-4 bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white font-bold rounded-xl hover:bg-gray-200 transition-colors flex items-center justify-center gap-2"
+                  className="py-3 px-4 bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white font-bold rounded-xl hover:bg-gray-200 transition-all active:scale-95 flex items-center justify-center gap-2 shadow-sm"
                 >
                   <Navigation size={18} />
                   Directions
@@ -545,7 +545,7 @@ export default function Home() {
                     alert('Simulation: Requesting service from ' + selectedService.name)
                     setSelectedService(null)
                   }}
-                  className="py-3 px-4 bg-red-600 text-white font-bold rounded-xl shadow-md hover:bg-red-700 transition-colors flex items-center justify-center gap-2"
+                  className="py-3 px-4 bg-red-600 text-white font-bold rounded-xl shadow-lg shadow-red-500/20 hover:bg-red-700 transition-all active:scale-95 flex items-center justify-center gap-2"
                 >
                   <Ambulance size={18} />
                   Book Demo

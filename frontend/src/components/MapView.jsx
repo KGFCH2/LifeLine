@@ -81,84 +81,55 @@ function getAmbulance3DIcon() {
 }
 
 function getHospitalMarkerIcon() {
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48">
-    <defs>
-      <filter id="hospShadow" x="-50%" y="-50%" width="200%" height="200%">
-        <feDropShadow dx="0" dy="2" stdDeviation="3" flood-opacity="0.3"/>
-      </filter>
-    </defs>
-    <circle cx="24" cy="24" r="20" fill="#fee2e2" stroke="#ef4444" stroke-width="2" filter="url(#hospShadow)"/>
-    <rect x="18" y="12" width="12" height="24" rx="2" fill="#ef4444"/>
-    <rect x="22" y="16" width="4" height="6" rx="1" fill="white"/>
-    <rect x="20" y="18" width="8" height="2" rx="1" fill="white"/>
-    <rect x="16" y="28" width="16" height="6" rx="1" fill="white" opacity="0.9"/>
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 40 40">
+    <circle cx="20" cy="20" r="18" fill="white" stroke="#ef4444" stroke-width="2"/>
+    <circle cx="20" cy="20" r="14" fill="#ef4444"/>
+    <path d="M20 12 L20 28 M12 20 L28 20" stroke="white" stroke-width="4" stroke-linecap="round"/>
   </svg>`
   return {
     url: `data:image/svg+xml,${encodeURIComponent(svg)}`,
-    scaledSize: new window.google.maps.Size(48, 48),
-    anchor: new window.google.maps.Point(24, 24)
+    scaledSize: new window.google.maps.Size(40, 40),
+    anchor: new window.google.maps.Point(20, 20)
   }
 }
 
 function getPoliceMarkerIcon() {
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48">
-    <defs>
-      <filter id="polShadow" x="-50%" y="-50%" width="200%" height="200%">
-        <feDropShadow dx="0" dy="2" stdDeviation="3" flood-opacity="0.3"/>
-      </filter>
-    </defs>
-    <circle cx="24" cy="24" r="20" fill="#dbeafe" stroke="#3b82f6" stroke-width="2" filter="url(#polShadow)"/>
-    <path d="M24 8 L32 16 L32 28 L16 28 L16 16 Z" fill="#3b82f6"/>
-    <rect x="20" y="20" width="8" height="6" rx="1" fill="white" opacity="0.9"/>
-    <rect x="22" y="12" width="4" height="2" rx="1" fill="#fbbf24"/>
-    <circle cx="14" cy="32" r="3" fill="#1f2937"/>
-    <circle cx="34" cy="32" r="3" fill="#1f2937"/>
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 40 40">
+    <circle cx="20" cy="20" r="18" fill="white" stroke="#3b82f6" stroke-width="2"/>
+    <circle cx="20" cy="20" r="14" fill="#3b82f6"/>
+    <path d="M20 12 L26 18 L26 28 L14 28 L14 18 Z" fill="white"/>
   </svg>`
   return {
     url: `data:image/svg+xml,${encodeURIComponent(svg)}`,
-    scaledSize: new window.google.maps.Size(48, 48),
-    anchor: new window.google.maps.Point(24, 24)
+    scaledSize: new window.google.maps.Size(40, 40),
+    anchor: new window.google.maps.Point(20, 20)
   }
 }
 
 function getDoctorMarkerIcon() {
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48">
-    <defs>
-      <filter id="docShadow" x="-50%" y="-50%" width="200%" height="200%">
-        <feDropShadow dx="0" dy="2" stdDeviation="3" flood-opacity="0.3"/>
-      </filter>
-    </defs>
-    <circle cx="24" cy="24" r="20" fill="#fef3c7" stroke="#f59e0b" stroke-width="2" filter="url(#docShadow)"/>
-    <circle cx="24" cy="16" r="6" fill="#f59e0b"/>
-    <rect x="18" y="22" width="12" height="14" rx="3" fill="white" stroke="#f59e0b" stroke-width="2"/>
-    <rect x="22" y="26" width="4" height="4" rx="1" fill="#f59e0b"/>
-    <path d="M21 34 Q24 36 27 34" stroke="#f59e0b" stroke-width="2" fill="none"/>
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 40 40">
+    <circle cx="20" cy="20" r="18" fill="white" stroke="#f59e0b" stroke-width="2"/>
+    <circle cx="20" cy="20" r="14" fill="#f59e0b"/>
+    <circle cx="20" cy="16" r="4" fill="white"/>
+    <path d="M14 26 Q20 30 26 26" stroke="white" stroke-width="3" fill="none"/>
   </svg>`
   return {
     url: `data:image/svg+xml,${encodeURIComponent(svg)}`,
-    scaledSize: new window.google.maps.Size(48, 48),
-    anchor: new window.google.maps.Point(24, 24)
+    scaledSize: new window.google.maps.Size(40, 40),
+    anchor: new window.google.maps.Point(20, 20)
   }
 }
 
 function getPharmacyMarkerIcon() {
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48">
-    <defs>
-      <filter id="pharmShadow" x="-50%" y="-50%" width="200%" height="200%">
-        <feDropShadow dx="0" dy="2" stdDeviation="3" flood-opacity="0.3"/>
-      </filter>
-    </defs>
-    <circle cx="24" cy="24" r="20" fill="#dcfce7" stroke="#22c55e" stroke-width="2" filter="url(#pharmShadow)"/>
-    <rect x="16" y="16" width="16" height="20" rx="2" fill="#22c55e"/>
-    <rect x="18" y="18" width="5" height="8" rx="1" fill="white" opacity="0.9"/>
-    <rect x="25" y="18" width="5" height="8" rx="1" fill="white" opacity="0.9"/>
-    <rect x="20" y="30" width="8" height="3" rx="1" fill="white" opacity="0.9"/>
-    <rect x="22" y="8" width="4" height="8" rx="1" fill="#f59e0b"/>
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 40 40">
+    <circle cx="20" cy="20" r="18" fill="white" stroke="#22c55e" stroke-width="2"/>
+    <circle cx="20" cy="20" r="14" fill="#22c55e"/>
+    <rect x="14" y="18" width="12" height="4" rx="1" fill="white"/>
   </svg>`
   return {
     url: `data:image/svg+xml,${encodeURIComponent(svg)}`,
-    scaledSize: new window.google.maps.Size(48, 48),
-    anchor: new window.google.maps.Point(24, 24)
+    scaledSize: new window.google.maps.Size(40, 40),
+    anchor: new window.google.maps.Point(20, 20)
   }
 }
 
