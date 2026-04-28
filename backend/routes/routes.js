@@ -23,8 +23,17 @@ router.get('/emergency', async (req, res) => {
       region: 'in'
     });
 
+    console.log('--- Google Directions API Response ---');
+    console.log('Status:', data.status);
+    if (data.error_message) console.log('Error Message:', data.error_message);
+    console.log('--------------------------------------');
+
     if (data.status !== 'OK') {
-      return res.status(502).json({ error: 'Directions API error', details: data.status });
+      return res.status(502).json({ 
+        error: 'Directions API error', 
+        details: data.status,
+        message: data.error_message || 'No additional details'
+      });
     }
 
     const routes = (data.routes || [])

@@ -169,7 +169,8 @@ export default function Home() {
         setActiveRoute(data.routes[0])
         setSelectedService(null) // Close modal to show map
       } else {
-        alert(`Could not calculate a route: ${data.details || data.error || 'Unknown error'}. Please ensure Directions API is enabled in Google Cloud Console.`)
+        const errorMsg = data.message || data.details || data.error || 'Unknown error'
+        alert(`Could not calculate a route: ${errorMsg}. Please ensure your API key has Directions API enabled and Billing is active.`)
       }
     } catch (err) {
       console.error('Routing error:', err)
