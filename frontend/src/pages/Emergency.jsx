@@ -12,6 +12,55 @@ import {
 
 const BACKEND_URL = import.meta.env.DEV ? 'http://localhost:5000' : (import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000')
 
+const lucideSvg = (inner, size, stroke) => (
+  `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="${stroke}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${inner}</svg>`
+)
+
+const LUCIDE = {
+  mapPinBlue: lucideSvg('<path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/>', 12, '#2563eb'),
+  mapPinRed: lucideSvg('<path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/>', 18, '#C8102E'),
+  phoneGreen: lucideSvg('<path d="M22 16.92V21a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h4.09a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L9.03 9.91a16 16 0 0 0 6 6l1.27-1.42a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92Z"/>', 14, '#059669'),
+  clockOrange: lucideSvg('<circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>', 12, '#c2410c'),
+  starAmber: lucideSvg('<polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>', 12, '#d97706'),
+}
+
+const buildHospitalInfoHtml = ({ name, address, phone, rating, openNow, distText, etaText }) => {
+  const safeName = name || 'Hospital'
+  const safeAddress = address || ''
+  const canCall = phone && phone !== 'N/A'
+  const ratingNum = Number(rating)
+  const ratingText = Number.isFinite(ratingNum) ? ratingNum.toFixed(1) : null
+  const openText = openNow === true ? 'Open now' : openNow === false ? 'Closed' : null
+  const openBg = openNow === true ? '#ecfdf3' : '#fef2f2'
+  const openFg = openNow === true ? '#059669' : '#dc2626'
+
+  return `
+    <div style="font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;max-width:240px;">
+      <div style="background:#ffffff;border:1px solid #e5e7eb;border-radius:16px;box-shadow:0 12px 30px rgba(15,23,42,0.12);overflow:hidden;">
+        <div style="height:4px;background:linear-gradient(90deg,#C8102E,#ef4444);"></div>
+        <div style="padding:10px 12px;">
+          <div style="display:flex;align-items:flex-start;gap:10px;">
+            <div style="width:36px;height:36px;border-radius:12px;background:#fee2e2;border:1px solid #fecaca;display:flex;align-items:center;justify-content:center;">
+              ${LUCIDE.mapPinRed}
+            </div>
+            <div style="flex:1;min-width:0;">
+              <div style="font-size:13px;font-weight:700;color:#111827;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${safeName}</div>
+              <div style="font-size:10px;color:#6b7280;line-height:1.3;margin-top:2px;">${safeAddress}</div>
+            </div>
+            ${canCall ? `<a href="tel:${phone}" style="width:32px;height:32px;border-radius:10px;background:#ecfdf3;border:1px solid #d1fae5;display:flex;align-items:center;justify-content:center;text-decoration:none;" title="Call">${LUCIDE.phoneGreen}</a>` : ''}
+          </div>
+          <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;">
+            ${distText ? `<span style="display:inline-flex;align-items:center;gap:4px;padding:4px 6px;border-radius:8px;background:#eff6ff;color:#1d4ed8;font-size:10px;font-weight:600;">${LUCIDE.mapPinBlue}${distText}</span>` : ''}
+            ${etaText ? `<span style="display:inline-flex;align-items:center;gap:4px;padding:4px 6px;border-radius:8px;background:#fff7ed;color:#c2410c;font-size:10px;font-weight:600;">${LUCIDE.clockOrange}${etaText}</span>` : ''}
+            ${ratingText ? `<span style="display:inline-flex;align-items:center;gap:4px;padding:4px 6px;border-radius:8px;background:#fef3c7;color:#92400e;font-size:10px;font-weight:600;">${LUCIDE.starAmber}${ratingText}</span>` : ''}
+            ${openText ? `<span style="display:inline-flex;align-items:center;gap:4px;padding:4px 6px;border-radius:8px;background:${openBg};color:${openFg};font-size:10px;font-weight:600;">${openText}</span>` : ''}
+          </div>
+        </div>
+      </div>
+    </div>
+  `
+}
+
 export default function Emergency() {
   const { user } = useAuth()
   const navigate = useNavigate()
@@ -63,8 +112,6 @@ export default function Emergency() {
   useEffect(() => {
     if (!user) { setShowLogin(true); return }
 
-    const FALLBACK = { lat: 22.5726, lng: 88.3639 }
-
     const onFirstFix = (pos) => {
       const coords = { lat: pos.coords.latitude, lng: pos.coords.longitude }
       setUserLocation(coords)
@@ -80,12 +127,10 @@ export default function Emergency() {
     }
 
     const onError = () => {
-      if (!stableGpsRef.current) {
-        stableGpsRef.current = FALLBACK
-        setUserLocation(FALLBACK)
-        setLocationError('Location access denied. Using default (Kolkata).')
-        fetchNearestHospital(FALLBACK)
-      }
+      if (!stableGpsRef.current) setUserLocation(null)
+      setLocationAccuracy(null)
+      setLocationError('Location access denied. Please enable location services to continue.')
+      setPhase('init')
     }
 
     // One-shot for immediate first fix
@@ -130,12 +175,9 @@ export default function Emergency() {
         fetchNearestHospital(coords)
       },
       () => {
-        const FALLBACK = { lat: 22.5726, lng: 88.3639 }
-        stableGpsRef.current = FALLBACK
-        setUserLocation(FALLBACK)
-        setLocationError('Location access denied. Using default (Kolkata).')
-        hospitalFetchedRef.current = false
-        fetchNearestHospital(FALLBACK)
+        setLocationAccuracy(null)
+        setLocationError('Location access denied. Please enable location services to continue.')
+        setLoading(false)
       },
       { enableHighAccuracy: true, timeout: 12000, maximumAge: 0 }
     )
@@ -421,8 +463,7 @@ export default function Emergency() {
   if (nearbyHospitals.length > 0) {
     nearbyHospitals.forEach((h, idx) => {
       if (h.location) {
-        const distString = h.distance != null ? `${h.distance.toFixed(1)} km` : ''
-        const phoneLink = h.phone && h.phone !== 'N/A' ? `<br/><a href="tel:${h.phone}" style="font-size:11px;color:#2563eb">📞 ${h.phone}</a>` : ''
+        const distString = h.distance != null ? `${h.distance.toFixed(1)} km` : null
         const isSelected = idx === selectedHospitalIdx
         const roughEta = h.distance != null ? Math.ceil(h.distance / 30 * 60) : null
         const eta = isSelected && activeRoute ? activeRoute.duration : (roughEta ? `~${roughEta} min` : null)
@@ -432,23 +473,15 @@ export default function Emergency() {
           type: 'hospital',
           bounce: isSelected,
           hospitalIdx: idx,
-          info: `
-            <div style="padding:4px; max-width:220px; font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
-              <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:8px; margin-bottom:4px;">
-                <strong style="color:#111827; font-size:13px; line-height:1.2; font-weight:700;">${h.name}</strong>
-                ${h.phone && h.phone !== 'N/A' ? `
-                  <a href="tel:${h.phone}" style="flex-shrink:0; width:28px; height:28px; background:#ecfdf5; border:1px solid #d1fae5; border-radius:8px; display:flex; align-items:center; justify-content:center; text-decoration:none;" title="Call">
-                    <span style="font-size:12px;">📞</span>
-                  </a>
-                ` : ''}
-              </div>
-              <div style="font-size:10px; color:#6b7280; line-height:1.3; margin-bottom:8px;">${h.address || ''}</div>
-              <div style="display:flex; align-items:center; gap:6px;">
-                ${distString ? `<span style="font-size:10px; font-weight:600; color:#16a34a; background:#f0fdf4; padding:2px 6px; border-radius:6px;">📍 ${distString}</span>` : ''}
-                ${eta ? `<span style="font-size:10px; font-weight:600; color:#ea580c; background:#fff7ed; padding:2px 6px; border-radius:6px;">⏱️ ${eta}</span>` : ''}
-              </div>
-            </div>
-          `
+          info: buildHospitalInfoHtml({
+            name: h.name,
+            address: h.address,
+            phone: h.phone,
+            rating: h.rating,
+            openNow: h.openNow,
+            distText: distString,
+            etaText: eta,
+          })
         })
       }
     })
@@ -458,15 +491,23 @@ export default function Emergency() {
       title: nearestHospital.name || 'Hospital',
       type: 'hospital',
       bounce: true,
-      info: `<div style="padding:8px;max-width:200px;font-family:sans-serif"><strong style="color:#C8102E">${nearestHospital.name}</strong><br/><span style="font-size:11px;color:#666">${nearestHospital.address || ''}</span>${nearestHospital.distance ? `<br/><span style="font-size:11px;color:#16a34a">📍 ${nearestHospital.distance}</span>` : ''}</div>`
+      info: buildHospitalInfoHtml({
+        name: nearestHospital.name,
+        address: nearestHospital.address,
+        phone: nearestHospital.phone,
+        rating: nearestHospital.rating,
+        openNow: nearestHospital.openNow,
+        distText: nearestHospital.distance || null,
+        etaText: activeRoute?.duration || null,
+      })
     })
   }
   if (tracking?.location) mapMarkers.push({ position: tracking.location, title: 'Ambulance', type: 'ambulance' })
 
   const routePoly = activeRoute ? [activeRoute] : routes
 
-  // Map center: use userLocation when available, else stable GPS, else Kolkata
-  const mapCenter = userLocation || stableGpsRef.current || { lat: 22.5726, lng: 88.3639 }
+  // Map center: only use a real user location
+  const mapCenter = userLocation || stableGpsRef.current
 
   if (!user) return showLogin ? <LoginModal onClose={() => navigate('/')} /> : null
 
@@ -511,26 +552,34 @@ export default function Emergency() {
       {/* ── Map ────────────────────────────────────────────────────────── */}
       <div className="px-4 mt-4">
         <div className="overflow-hidden border border-gray-100 shadow-md rounded-2xl">
-          <MapView
-            center={mapCenter}
-            markers={mapMarkers}
-            routes={routePoly}
-            activeRoute={activeRoute}
-            userLocation={userLocation}
-            height="340px"
-            traffic={true}
-            show3D={show3D}
-            onToggle3D={() => setShow3D(v => !v)}
-            onMapClick={undefined}
-            onHospitalSelect={(idx) => nearbyHospitals[idx] && handleHospitalSelect(nearbyHospitals[idx], idx)}
-            onRefreshLocation={refreshLocation}
-            zoom={14}
-            demoMode={demoMode}
-            demoPath={demoPath}
-            demoAmbulancePos={demoAmbulancePos}
-            demoProgress={demoProgress}
-            userAvatar={userAvatar}
-          />
+          {mapCenter ? (
+            <MapView
+              center={mapCenter}
+              markers={mapMarkers}
+              routes={routePoly}
+              activeRoute={activeRoute}
+              userLocation={userLocation}
+              height="340px"
+              traffic={true}
+              show3D={show3D}
+              onToggle3D={() => setShow3D(v => !v)}
+              onMapClick={undefined}
+              onHospitalSelect={(idx) => nearbyHospitals[idx] && handleHospitalSelect(nearbyHospitals[idx], idx)}
+              onRefreshLocation={refreshLocation}
+              zoom={14}
+              demoMode={demoMode}
+              demoPath={demoPath}
+              demoAmbulancePos={demoAmbulancePos}
+              demoProgress={demoProgress}
+              userAvatar={userAvatar}
+            />
+          ) : (
+            <div className="h-[340px] bg-white flex flex-col items-center justify-center text-center px-6">
+              <AlertTriangle size={20} className="mb-2 text-amber-500" />
+              <p className="text-sm font-semibold text-gray-800">Location not available</p>
+              <p className="mt-1 text-xs text-gray-500">Enable location services to load nearby hospitals.</p>
+            </div>
+          )}
         </div>
       </div>
 

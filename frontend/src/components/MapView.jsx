@@ -115,6 +115,7 @@ export default function MapView({
   const demoMarkerRef = useRef(null)
   const avatarMarkerRef = useRef(null)
   const infoWindowsRef = useRef([])     // track open info windows
+  const autoOpenTimeoutRef = useRef(null)
 
   const [mapLoaded, setMapLoaded] = useState(false)
   const [mapError, setMapError] = useState('')
@@ -176,6 +177,11 @@ export default function MapView({
   // ── Traffic layer ───────────────────────────────────────────────────────
   useEffect(() => {
     if (!mapRef.current || !mapLoaded) return
+
+    if (autoOpenTimeoutRef.current) {
+      clearTimeout(autoOpenTimeoutRef.current)
+      autoOpenTimeoutRef.current = null
+    }
     if (!trafficLayerRef.current) {
       trafficLayerRef.current = new window.google.maps.TrafficLayer()
     }
@@ -266,7 +272,10 @@ export default function MapView({
         })
         // Auto-open selected (bouncing) hospital info window
         if (marker.type === 'hospital' && marker.bounce && iw) {
-          setTimeout(() => iw.open(mapRef.current, m), 800)
+          autoOpenTimeoutRef.current = setTimeout(() => {
+            infoWindowsRef.current.forEach(w => w.close())
+            iw.open(mapRef.current, m)
+          }, 400)
         }
         if (iw) infoWindowsRef.current.push(iw)
       }
