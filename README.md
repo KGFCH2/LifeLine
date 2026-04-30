@@ -309,7 +309,7 @@ We are the **LifeLine+** team, participating in the **Google Solution Challenge 
 | --- | --- |
 | Babin Bid | Team Lead |
 | Atanu Saha | Frontend Developer |
-| Rohit Kumar Adak | Idea Provider, Tech Architecture Developer& Backend Developer |
+| Rohit Kumar Adak | Idea Provider, Tech Architect & Backend Developer |
 | Sagnik Bachhar | Researcher |
 
 ## ⚠️ Safety Note
