@@ -50,7 +50,7 @@ The platform is successfully deployed on two different cloud stacks:
 
 > **[Rapid Crisis Response] Accelerated Emergency Response and Crisis Coordination in Hospitality**
 
-> This project is our submission for the **Google Solution Challenge 2026**, hosted on the **Hack2Skill** platform.
+This project is our submission for the **[Google Solution Challenge 2026](https://hack2skill.com/event/build-with-ai?tab=solutionchallenge2026&utm_source=hack2skill&utm_medium=homepage)**, hosted on the **[Hack2Skill](https://hack2skill.com/)** platform.
 
 Emergency response often breaks down because nearby services, traffic-aware routes, ambulance availability, police coordination, and verified civilian help are disconnected. LifeLine+ turns those fragmented steps into one live, mobile-first emergency workflow.
 
