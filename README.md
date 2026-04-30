@@ -48,7 +48,7 @@ The platform is successfully deployed on two different cloud stacks:
 
 ## 🧭 Problem Statement
 
-**[Rapid Crisis Response] Accelerated Emergency Response and Crisis Coordination in Hospitality**
+> **[Rapid Crisis Response] Accelerated Emergency Response and Crisis Coordination in Hospitality**
 
 > This project is our submission for the **Google Solution Challenge 2026**, hosted on the **Hack2Skill** platform.
 
