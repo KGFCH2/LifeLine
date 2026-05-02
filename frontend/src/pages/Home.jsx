@@ -65,19 +65,45 @@ export default function Home() {
   const [showLogin, setShowLogin] = useState(false)
   const [form, setForm] = useState({ name: '', email: '', message: '' })
   const [sent, setSent] = useState(false)
+  const [contactLoading, setContactLoading] = useState(false)
+  const [contactError, setContactError] = useState('')
 
   const handleEmergency = () => {
     if (!user) setShowLogin(true)
     else navigate('/emergency')
   }
 
-  const handleContactSubmit = (e) => {
+  const handleContactSubmit = async (e) => {
     e.preventDefault()
-    setSent(true)
-    setTimeout(() => {
-      setSent(false)
+    setContactLoading(true)
+    setContactError('')
+
+    try {
+      const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000'
+      const accountName = user?.name || user?.displayName || ''
+      const response = await fetch(`${backendUrl}/api/contact`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...form,
+          ...(accountName ? { accountName } : {})
+        })
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to send message')
+      }
+
+      setSent(true)
       setForm({ name: '', email: '', message: '' })
-    }, 3000)
+      setTimeout(() => { setSent(false) }, 3000)
+    } catch (err) {
+      setContactError(err.message || 'Failed to send message')
+    } finally {
+      setContactLoading(false)
+    }
   }
 
   const features = [
@@ -464,9 +490,10 @@ export default function Home() {
                   <input id="contact-name" className="input-field" placeholder="Your Name" value={form.name} onChange={(e) => setForm(f => ({ ...f, name: e.target.value }))} required />
                   <input id="contact-email" className="input-field" type="email" placeholder="Email Address" value={form.email} onChange={(e) => setForm(f => ({ ...f, email: e.target.value }))} required />
                   <textarea id="contact-message" className="input-field min-h-[100px] resize-none" placeholder="Your message..." value={form.message} onChange={(e) => setForm(f => ({ ...f, message: e.target.value }))} required />
-                  <button type="submit" id="contact-submit" className="w-full bg-[#C8102E] hover:bg-[#a50d26] text-white font-bold py-3 rounded-xl flex items-center justify-center gap-2 transition-all active:scale-95 shadow-sm shadow-[#C8102E]/15">
+                  {contactError ? <p className="text-sm text-red-600">{contactError}</p> : null}
+                  <button type="submit" id="contact-submit" disabled={contactLoading} className="w-full bg-[#C8102E] hover:bg-[#a50d26] text-white font-bold py-3 rounded-xl flex items-center justify-center gap-2 transition-all active:scale-95 shadow-sm shadow-[#C8102E]/15 disabled:opacity-70 disabled:cursor-not-allowed">
                     <Send size={16} />
-                    Send Message
+                    {contactLoading ? 'Sending...' : 'Send Message'}
                   </button>
                 </form>
               )}

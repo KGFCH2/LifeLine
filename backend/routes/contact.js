@@ -32,7 +32,7 @@ router.post('/', async (req, res) => {
 
     const saved = await saveDocument('usercontact', contactMessage.id, contactMessage);
     const firestoreAvailable = Boolean(getFirestore());
-
+    
     if (!saved) {
       console.error('❌ [Contact] saveDocument returned false for', contactMessage.id);
       return res.status(500).json({ success: false, error: 'Failed to persist contact message', firestoreAvailable });
