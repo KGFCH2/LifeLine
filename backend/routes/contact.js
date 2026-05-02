@@ -32,16 +32,6 @@ router.post('/', async (req, res) => {
 
     const saved = await saveDocument('usercontact', contactMessage.id, contactMessage);
     const firestoreAvailable = Boolean(getFirestore());
-
-    if (!firestoreAvailable) {
-      console.warn('⚠️ Firestore is not available. Contact message saved to in-memory store only:', contactMessage);
-    }
-
-    if (saved) {
-        console.log('✅ Contact message saved successfully:', contactMessage);
-    } else {
-        console.error('❌ Failed to save contact message:', contactMessage);
-    }
     
     if (!saved) {
       console.error('❌ [Contact] saveDocument returned false for', contactMessage.id);
