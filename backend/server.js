@@ -15,6 +15,7 @@ import bookingRoutes from './routes/booking.js';
 import policeRoutes from './routes/police.js';
 import dashboardRoutes from './routes/dashboard.js';
 import authRoutes from './routes/auth.js';
+import contactRoutes from './routes/contact.js';
 import { initSocketHandlers } from './sockets/handlers.js';
 import { getFirebaseAdmin } from './lib/firebaseAdmin.js';
 
@@ -96,6 +97,7 @@ app.use('/api/booking', bookingRoutes);
 app.use('/api/police', policeRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/auth', authRoutes);
+app.use('/api/contact', contactRoutes);
 
 app.get('/health', (req, res) => {
   res.json({
