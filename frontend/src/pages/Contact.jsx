@@ -1,14 +1,46 @@
 import { useState } from 'react'
 import { Mail, Phone, MapPin, Send, CheckCircle } from 'lucide-react'
+import { useAuth } from '../context/AuthContext.jsx'
 
 export default function Contact() {
+  const { user } = useAuth()
   const [form, setForm] = useState({ name: '', email: '', message: '' })
   const [sent, setSent] = useState(false)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
-    setSent(true)
-    setTimeout(() => { setSent(false); setForm({ name: '', email: '', message: '' }) }, 3000)
+
+    setLoading(true)
+    setError('')
+
+    try {
+      const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000'
+      const accountName = user?.name || user?.displayName || ''
+      const response = await fetch(`${backendUrl}/api/contact`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...form,
+          ...(accountName ? { accountName } : {})
+        })
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to send message')
+      }
+
+      setSent(true)
+      setForm({ name: '', email: '', message: '' })
+      setTimeout(() => { setSent(false) }, 3000)
+    } catch (err) {
+      setError(err.message || 'Failed to send message')
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -53,8 +85,9 @@ export default function Contact() {
             <input className="input-field" placeholder="Your Name" value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} required />
             <input className="input-field" placeholder="Email" type="email" value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))} required />
             <textarea className="input-field min-h-[100px] resize-none" placeholder="Your message..." value={form.message} onChange={e => setForm(f => ({ ...f, message: e.target.value }))} required />
-            <button type="submit" className="btn-primary w-full flex items-center justify-center gap-2">
-              <Send size={18} /> Send Message
+            {error ? <p className="text-sm text-red-600 dark:text-red-400">{error}</p> : null}
+            <button type="submit" disabled={loading} className="btn-primary w-full flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed">
+              <Send size={18} /> {loading ? 'Sending...' : 'Send Message'}
             </button>
           </form>
         )}
