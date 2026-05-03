@@ -95,10 +95,23 @@ function getDoctorPinIcon() {
 }
 
 function getAmbulanceIcon() {
+  // We use a custom SVG that embeds the PNG for better visibility and a pin-like look
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="80" height="80" viewBox="0 0 80 80">
+    <defs>
+      <filter id="f1" x="0" y="0" width="200%" height="200%">
+        <feOffset result="offOut" in="SourceAlpha" dx="0" dy="4" />
+        <feGaussianBlur result="blurOut" in="offOut" stdDeviation="3" />
+        <feBlend in="SourceGraphic" in2="blurOut" mode="normal" />
+      </filter>
+    </defs>
+    <circle cx="40" cy="40" r="35" fill="white" stroke="#C8102E" stroke-width="3" filter="url(#f1)"/>
+    <image href="/ambulance.png" x="12" y="12" width="56" height="56" />
+  </svg>`
+  
   return {
-    url: '/ambulance.png',
-    scaledSize: new window.google.maps.Size(60, 60),
-    anchor: new window.google.maps.Point(30, 60),
+    url: `data:image/svg+xml,${encodeURIComponent(svg)}`,
+    scaledSize: new window.google.maps.Size(64, 64),
+    anchor: new window.google.maps.Point(32, 32),
   }
 }
 
@@ -153,6 +166,7 @@ export default function MapView({
   onRefreshLocation,
   onHospitalSelect,
   isDark = false,
+  phase = 'init',
 }) {
   const containerRef = useRef(null)
   const mapRef = useRef(null)         
@@ -163,6 +177,7 @@ export default function MapView({
   const trafficLayerRef = useRef(null)
   const demoPathRef = useRef(null)
   const demoMarkerRef = useRef(null)
+  const demoGlowRef = useRef(null)
   const avatarMarkerRef = useRef(null)
   const infoWindowsRef = useRef([])     
   const autoOpenTimeoutRef = useRef(null)
@@ -346,11 +361,16 @@ export default function MapView({
   // ── Demo animation ──────────────────────────────────────────────────────
   useEffect(() => {
     if (!mapRef.current || !mapLoaded) return
-    if (!demoMode) {
+    
+    // Clear everything if not in an active phase
+    if (!demoMode && !['arrived', 'trip_active', 'completed'].includes(phase)) {
       if (demoPathRef.current) demoPathRef.current.setMap(null)
       if (demoMarkerRef.current) demoMarkerRef.current.setMap(null)
+      if (demoGlowRef.current) demoGlowRef.current.setMap(null)
       return
     }
+
+    // Path drawing
     if (demoPath.length > 1) {
       if (!demoPathRef.current) {
         demoPathRef.current = new window.google.maps.Polyline({
@@ -361,14 +381,42 @@ export default function MapView({
         if (demoPathRef.current.getMap() !== mapRef.current) demoPathRef.current.setMap(mapRef.current)
       }
     }
+
+    // Ambulance marker & camera follow
     if (demoAmbulancePos) {
       if (!demoMarkerRef.current) {
         demoMarkerRef.current = new window.google.maps.Marker({
           position: demoAmbulancePos, map: mapRef.current, icon: getAmbulanceIcon(), zIndex: 500
         })
+        
+        // Red Effect (Glow)
+        demoGlowRef.current = new window.google.maps.Circle({
+          center: demoAmbulancePos,
+          map: mapRef.current,
+          radius: 30,
+          fillColor: '#C8102E',
+          fillOpacity: 0.25,
+          strokeWeight: 0,
+          zIndex: 400
+        })
+
+        // On start, fit bounds to show the whole path
+        if (demoPath.length > 5) {
+          const bounds = new window.google.maps.LatLngBounds()
+          demoPath.forEach(p => bounds.extend(p))
+          mapRef.current.fitBounds(bounds, { top: 80, right: 80, bottom: 80, left: 80 })
+        }
       } else { 
         demoMarkerRef.current.setPosition(demoAmbulancePos)
         if (demoMarkerRef.current.getMap() !== mapRef.current) demoMarkerRef.current.setMap(mapRef.current)
+        
+        if (demoGlowRef.current) {
+          demoGlowRef.current.setCenter(demoAmbulancePos)
+          if (demoGlowRef.current.getMap() !== mapRef.current) demoGlowRef.current.setMap(mapRef.current)
+        }
+
+        // Follow the ambulance (smooth pan)
+        mapRef.current.panTo(demoAmbulancePos)
       }
     }
   }, [demoMode, demoPath, demoAmbulancePos, mapLoaded])
