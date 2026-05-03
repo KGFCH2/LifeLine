@@ -95,24 +95,10 @@ function getDoctorPinIcon() {
 }
 
 function getAmbulanceIcon() {
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="52" height="52" viewBox="0 0 52 52">
-    <filter id="amb"><feDropShadow dx="0" dy="2" stdDeviation="3" flood-opacity="0.25"/></filter>
-    <rect x="4" y="12" width="44" height="28" rx="6" fill="#fff" stroke="#e5e7eb" stroke-width="1.5" filter="url(#amb)"/>
-    <rect x="4" y="10" width="44" height="6" rx="3" fill="#3b82f6" opacity="0.9"/>
-    <rect x="6" y="10" width="10" height="6" fill="#60a5fa" opacity="0.8"/>
-    <rect x="32" y="10" width="10" height="6" fill="#ef4444" opacity="0.8"/>
-    <rect x="18" y="22" width="16" height="4" rx="1" fill="#C8102E"/>
-    <rect x="24" y="18" width="4" height="12" rx="1" fill="#C8102E"/>
-    <circle cx="12" cy="42" r="5" fill="#1f2937"/>
-    <circle cx="40" cy="42" r="5" fill="#1f2937"/>
-    <circle cx="12" cy="42" r="2.5" fill="#4b5563"/>
-    <circle cx="40" cy="42" r="2.5" fill="#4b5563"/>
-    <rect x="40" y="20" width="8" height="12" rx="2" fill="#87ceeb" opacity="0.8"/>
-  </svg>`
   return {
-    url: `data:image/svg+xml,${encodeURIComponent(svg)}`,
-    scaledSize: new window.google.maps.Size(52, 52),
-    anchor: new window.google.maps.Point(26, 48),
+    url: '/ambulance.png',
+    scaledSize: new window.google.maps.Size(60, 60),
+    anchor: new window.google.maps.Point(30, 60),
   }
 }
 
