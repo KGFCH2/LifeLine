@@ -12,23 +12,28 @@ export const EmergencyProvider = ({ children }) => {
   const [phase, setPhase] = useState(() => localStorage.getItem('ll_phase') || 'init');
   const [activeAmbulance, setActiveAmbulance] = useState(() => {
     const saved = localStorage.getItem('ll_ambulance');
-    return saved ? JSON.parse(saved) : null;
+    if (!saved || saved === 'undefined') return null;
+    try { return JSON.parse(saved); } catch { return null; }
   });
   const [nearestHospital, setNearestHospital] = useState(() => {
     const saved = localStorage.getItem('ll_hospital');
-    return saved ? JSON.parse(saved) : null;
+    if (!saved || saved === 'undefined') return null;
+    try { return JSON.parse(saved); } catch { return null; }
   });
   const [activeRoute, setActiveRoute] = useState(() => {
     const saved = localStorage.getItem('ll_route');
-    return saved ? JSON.parse(saved) : null;
+    if (!saved || saved === 'undefined') return null;
+    try { return JSON.parse(saved); } catch { return null; }
   });
   const [demoAmbulancePos, setDemoAmbulancePos] = useState(() => {
     const saved = localStorage.getItem('ll_pos');
-    return saved ? JSON.parse(saved) : null;
+    if (!saved || saved === 'undefined') return null;
+    try { return JSON.parse(saved); } catch { return null; }
   });
   const [demoPath, setDemoPath] = useState(() => {
     const saved = localStorage.getItem('ll_path');
-    return saved ? JSON.parse(saved) : [];
+    if (!saved || saved === 'undefined') return [];
+    try { return JSON.parse(saved); } catch { return []; }
   });
   const [demoProgress, setDemoProgress] = useState(() => Number(localStorage.getItem('ll_progress')) || 0);
   const [demoCountdown, setDemoCountdown] = useState(() => Number(localStorage.getItem('ll_countdown')) || 60);
@@ -39,7 +44,8 @@ export const EmergencyProvider = ({ children }) => {
   const [showCancelNotification, setShowCancelNotification] = useState(false);
   const [chatMessages, setChatMessages] = useState(() => {
     const saved = localStorage.getItem('ll_chat');
-    return saved ? JSON.parse(saved) : [{ role: 'ai', text: 'How can I assist with your medical emergency today?' }];
+    if (!saved || saved === 'undefined') return [{ role: 'ai', text: 'How can I assist with your medical emergency today?' }];
+    try { return JSON.parse(saved); } catch { return [{ role: 'ai', text: 'How can I assist with your medical emergency today?' }]; }
   });
   
   const demoIntervalRef = useRef(null);
