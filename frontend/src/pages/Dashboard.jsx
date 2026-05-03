@@ -215,11 +215,11 @@ export default function Dashboard() {
           ) : (
             <div className="space-y-3">
               {recentActivity.length > 0 ? (
-                recentActivity.map(item => {
+                recentActivity.map((item, idx) => {
                   const Icon = activityIcon(item.type)
                   const aColor = activityColors[item.type] || { bg: 'bg-gray-50', darkBg: 'bg-slate-800', color: 'text-gray-500' }
                   return (
-                    <div key={item.id} className={`rounded-2xl border p-5 flex items-center gap-4 transition-all hover:scale-[1.01] ${
+                    <div key={`${item.id}-${idx}`} className={`rounded-2xl border p-5 flex items-center gap-4 transition-all hover:scale-[1.01] ${
                       isDark ? 'bg-slate-900 border-slate-800 hover:border-slate-700' : 'bg-white border-gray-100 shadow-sm hover:shadow-md'
                     }`}>
                       <div className={`w-12 h-12 ${isDark ? aColor.darkBg : aColor.bg} rounded-2xl flex items-center justify-center shrink-0 transition-all duration-300 group-hover:scale-110 group-hover:rotate-6 shadow-sm`}>
