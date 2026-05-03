@@ -11,7 +11,7 @@ import {
   Ambulance, Phone, MapPin, Clock, Navigation, AlertTriangle, ChevronLeft,
   Shield, Car, X, CheckCircle, Siren, Route, User, Activity, MessageSquare,
   Timer, ArrowRight, Loader2, Building2, Pill, Stethoscope, Sparkles, Send, Bot,
-  RefreshCw, Mic
+  RefreshCw, Mic, Hospital
 } from 'lucide-react'
 import { useEmergency } from '../context/EmergencyContext.jsx'
 
