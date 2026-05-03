@@ -69,56 +69,18 @@ const buildHospitalInfoHtml = ({ name, address, phone, rating, openNow, distText
 }
 
 // ── LifeLine+ Chatbot Component ───────────────────────────────────────────
-function LifeLineChatbot({ isDark, userLocation, nearbyServices, selectedHospital, activeRoute, activeServiceType }) {
-  const [messages, setMessages] = useState([
-    { role: 'ai', text: "Hello! I'm your LifeLine+ Chatbot. I have access to your location, nearby facilities, and your active route. How can I assist you right now?" }
-  ])
-  const [input, setInput] = useState('')
-  const [loading, setLoading] = useState(false)
+function LifeLineChatbot({ isDark, chatMessages, onSendMessage, loading }) {
   const scrollRef = useRef(null)
+  const [input, setInput] = useState('')
 
   useEffect(() => {
     if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight
-  }, [messages])
-
-  const callAI = async (prompt) => {
-    try {
-      const response = await fetch(`${BACKEND_URL}/api/verify/chat`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          message: prompt,
-          context: {
-            userLocation,
-            selectedHospital,
-            activeRoute,
-            nearbyServices: nearbyServices.slice(0, 10)
-          }
-        })
-      })
-      const data = await response.json()
-      return data.text || "Stay calm. I'm here to help."
-    } catch (e) {
-      return "I'm having trouble connecting to my central brain. If this is an emergency, please call 108 immediately."
-    }
-  }
-
-  const handleSend = async () => {
-    if (!input.trim() || loading) return
-    const userMsg = input.trim()
-    setInput('')
-    setMessages(prev => [...prev, { role: 'user', text: userMsg }])
-    setLoading(true)
-
-    const aiRes = await callAI(userMsg)
-    setMessages(prev => [...prev, { role: 'ai', text: aiRes }])
-    setLoading(false)
-  }
+  }, [chatMessages])
 
   return (
     <div className="flex flex-col h-full overflow-hidden">
       <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 space-y-4 no-scrollbar">
-        {messages.map((m, i) => (
+        {chatMessages.map((m, i) => (
           <div key={i} className={`flex items-start gap-2.5 ${m.role === 'user' ? 'flex-row-reverse' : 'flex-row'}`}>
             <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center shadow-sm ${
               m.role === 'user' 
@@ -154,14 +116,14 @@ function LifeLineChatbot({ isDark, userLocation, nearbyServices, selectedHospita
           <input 
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && handleSend()}
+            onKeyDown={(e) => e.key === 'Enter' && (onSendMessage(input), setInput(''))}
             placeholder="Ask AI anything about this emergency..."
             className={`flex-1 pl-4 pr-12 py-3 rounded-xl text-sm outline-none transition-all ${
               isDark ? 'bg-slate-800 text-white border-slate-700 focus:border-[#C8102E]' : 'bg-gray-50 border-gray-200 focus:border-[#C8102E]'
             }`}
           />
           <button 
-            onClick={handleSend}
+            onClick={() => { onSendMessage(input); setInput(''); }}
             disabled={loading || !input.trim()}
             className="absolute right-1.5 w-9 h-9 bg-[#C8102E] text-white rounded-lg flex items-center justify-center hover:bg-[#a50d26] transition-all disabled:opacity-50 active:scale-90"
           >
@@ -190,7 +152,8 @@ export default function Emergency() {
     demoCountdown, setDemoCountdown, demoMode, setDemoMode, 
     resetEmergency, startLeg1Animation, startLeg2Animation, 
     showArrivalNotification, setShowArrivalNotification, 
-    setDemoPath, demoPath, logActivity 
+    setDemoPath, demoPath, logActivity,
+    chatMessages, setChatMessages
   } = useEmergency()
   const [destination, setDestination] = useState(nearestHospital?.location || null)
 
@@ -211,7 +174,6 @@ export default function Emergency() {
   const [civilianResult, setCivilianResult] = useState(null)
   const [show3D, setShow3D] = useState(false)
   const [chatOpen, setChatOpen] = useState(false)
-  const [inputMsg, setInputMsg] = useState('')
   const [selectedAmbulance, setSelectedAmbulance] = useState(null)
   const [userAvatar, setUserAvatar] = useState(null)
   const [selectedHospitalIdx, setSelectedHospitalIdx] = useState(-1)
