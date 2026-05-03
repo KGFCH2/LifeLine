@@ -11,10 +11,10 @@ const userActivity = new Map();
 function getOrCreateUserStats(userId) {
   if (!userStats.has(userId)) {
     userStats.set(userId, {
-      totalRequests: Math.floor(Math.random() * 20) + 5,
-      activeAmbulances: Math.floor(Math.random() * 5) + 3,
-      avgResponseTime: `${Math.floor(Math.random() * 3) + 3}m ${Math.floor(Math.random() * 60).toString().padStart(2, '0')}s`,
-      policeAlerts: Math.floor(Math.random() * 5),
+      totalRequests: 0,
+      activeAmbulances: 0,
+      avgResponseTime: '0m 00s',
+      policeAlerts: 0,
       lastUpdated: new Date().toISOString()
     });
   }
@@ -24,14 +24,7 @@ function getOrCreateUserStats(userId) {
 // Initialize default activity for a user
 function getOrCreateUserActivity(userId) {
   if (!userActivity.has(userId)) {
-    const activities = [
-      { id: 1, type: 'ambulance', title: 'Ambulance AMB-1002 assigned', time: '2 min ago', status: 'active', timestamp: Date.now() - 120000 },
-      { id: 2, type: 'civilian', title: 'Civilian mode activated', time: '15 min ago', status: 'completed', timestamp: Date.now() - 900000 },
-      { id: 3, type: 'police', title: 'Police alert sent to City PS', time: '1 hour ago', status: 'completed', timestamp: Date.now() - 3600000 },
-      { id: 4, type: 'booking', title: 'Dr. Sharma appointment confirmed', time: '3 hours ago', status: 'confirmed', timestamp: Date.now() - 10800000 },
-      { id: 5, type: 'ambulance', title: 'Emergency request completed', time: '1 day ago', status: 'completed', timestamp: Date.now() - 86400000 },
-    ];
-    userActivity.set(userId, activities);
+    userActivity.set(userId, []);
   }
   return userActivity.get(userId);
 }
