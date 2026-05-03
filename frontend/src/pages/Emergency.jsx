@@ -233,9 +233,7 @@ export default function Emergency() {
     setPhase('fetching_hospital')
     setLoading(true)
     try {
-      if (!window.google || !window.google.maps || !window.google.maps.places) {
-        throw new Error('Google Maps not loaded')
-      }
+      // We use a promise to wait for google maps to be ready if it's not yet
       
       const results = await new Promise((resolve, reject) => {
         let attempts = 0;
@@ -1021,7 +1019,7 @@ export default function Emergency() {
                       <div className={`mb-6 p-4 rounded-2xl border ${isDark ? 'bg-slate-900/50 border-emerald-500/20' : 'bg-white border-emerald-100'}`}>
                         <div className="flex items-center gap-3 mb-2">
                           <div className="w-8 h-8 bg-red-50 rounded-lg flex items-center justify-center text-[#C8102E]">
-                            <Hospital size={16} />
+                            <Building2 size={16} />
                           </div>
                           <p className={`text-sm font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>{nearestHospital.name}</p>
                         </div>
