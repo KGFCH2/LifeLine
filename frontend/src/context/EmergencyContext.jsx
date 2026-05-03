@@ -101,6 +101,13 @@ export const EmergencyProvider = ({ children }) => {
       setArrivalType('hospital');
       setShowArrivalNotification(true);
       setTimeout(() => setShowArrivalNotification(false), 10000);
+      
+      // Log activity
+      const savedUser = localStorage.getItem('user');
+      if (savedUser) {
+        const u = JSON.parse(savedUser);
+        logActivity(u.id || u.uid, 'ambulance', `Emergency trip to ${nearestHospital?.name || 'Hospital'} completed`, 'completed');
+      }
     }
     setStepCounter(0);
   };
