@@ -97,7 +97,7 @@ export default function Home() {
             { label: 'Lives Saved', value: '85k+', icon: Activity, color: 'text-[#C8102E]' },
           ].map((stat) => (
             <div key={stat.label} className="flex items-center gap-4 group">
-              <div className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-transform group-hover:scale-105 ${isDark ? 'bg-slate-900 shadow-xl' : 'bg-white shadow-sm'}`}>
+              <div className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-transform group-hover:scale-105 shadow-red-lower ${isDark ? 'bg-slate-900' : 'bg-white'}`}>
                 <stat.icon size={22} className={stat.color} />
               </div>
               <div>
@@ -150,8 +150,8 @@ export default function Home() {
             ].map((s, idx) => (
               <div 
                 key={idx} 
-                className={`p-10 rounded-[2.5rem] border transition-all duration-500 hover:-translate-y-2 group ${
-                  isDark ? 'bg-slate-900 border-slate-800 hover:border-[#C8102E]/40' : 'bg-white border-gray-100 shadow-xl shadow-gray-200/40'
+                className={`p-10 rounded-[2.5rem] border transition-all duration-500 hover:-translate-y-2 group shadow-red-lower hover:shadow-red-strong ${
+                  isDark ? 'bg-slate-900 border-slate-800 hover:border-[#C8102E]/40' : 'bg-white border-gray-100 shadow-xl'
                 }`}
               >
                 <div className={`w-14 h-14 rounded-2xl ${s.color} flex items-center justify-center text-white shadow-2xl shadow-inherit mb-8 group-hover:scale-105 transition-transform`}>
@@ -177,7 +177,7 @@ export default function Home() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {TOP_DOCTORS.map((doc) => (
               <div key={doc.id} className={`rounded-[2rem] border p-6 transition-all group ${
-                isDark ? 'bg-slate-900 border-slate-800 hover:border-slate-700' : 'bg-white border-gray-100 hover:shadow-xl'
+                isDark ? 'bg-slate-900 border-slate-800 hover:border-slate-700 shadow-red-lower' : 'bg-white border-gray-100 hover:shadow-xl shadow-red-lower'
               }`}>
                 <div className="flex items-center gap-4 mb-6">
                   <div className="w-14 h-14 bg-[#C8102E] rounded-2xl flex items-center justify-center text-xl font-black text-white shadow-lg shadow-red-500/20">
@@ -200,8 +200,8 @@ export default function Home() {
                 </div>
                 <button 
                   onClick={handleDoctors}
-                  className={`w-full py-3.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${
-                    isDark ? 'bg-slate-800 text-white hover:bg-slate-700' : 'bg-gray-50 text-gray-900 hover:bg-[#C8102E] hover:text-white'
+                  className={`w-full py-3.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all shadow-md hover:shadow-red-strong ${
+                    isDark ? 'bg-slate-800 text-white hover:bg-slate-700 shadow-red-lower/20' : 'bg-gray-50 text-gray-900 hover:bg-[#C8102E] hover:text-white shadow-red-lower'
                   }`}
                 >
                   Book Appointment
@@ -234,15 +234,15 @@ export default function Home() {
               { name: 'Rohit Kumar Adak', role: 'Idea, Architect & Backend Dev', initials: 'RK', portfolio: 'https://rohitadak.dev'},
               { name: 'Sagnik Bachhar', role: 'Researcher', initials: 'SB', portfolio: null },
             ].map((m) => (
-              <div key={m.name} className={`flex flex-col items-center text-center p-6 rounded-[2rem] border transition-all duration-300 group ${
-                isDark ? 'bg-slate-900 border-slate-800 hover:border-[#C8102E]/30 shadow-xl' : 'bg-white border-gray-100 hover:border-[#C8102E]/20 hover:shadow-lg'
+              <div key={m.name} className={`flex flex-col items-center text-center p-6 rounded-[2rem] border transition-all duration-300 group shadow-red-lower ${
+                isDark ? 'bg-slate-900 border-slate-800 hover:border-[#C8102E]/30' : 'bg-white border-gray-100 hover:border-[#C8102E]/20 hover:shadow-lg'
               }`}>
                 {m.portfolio ? (
-                  <a href={m.portfolio} target="_blank" rel="noopener noreferrer" className="w-16 h-16 rounded-2xl bg-[#C8102E] flex items-center justify-center text-white font-black text-xl mb-4 shadow-xl shadow-[#C8102E]/20 group-hover:scale-105 transition-transform">
+                  <a href={m.portfolio} target="_blank" rel="noopener noreferrer" className="w-16 h-16 rounded-2xl bg-[#C8102E] flex items-center justify-center text-white font-black text-xl mb-4 shadow-xl shadow-red-strong group-hover:scale-105 transition-transform">
                     {m.initials}
                   </a>
                 ) : (
-                  <div className="w-16 h-16 rounded-2xl bg-[#C8102E] flex items-center justify-center text-white font-black text-xl mb-4 shadow-xl shadow-[#C8102E]/20 group-hover:scale-105 transition-transform">
+                  <div className="w-16 h-16 rounded-2xl bg-[#C8102E] flex items-center justify-center text-white font-black text-xl mb-4 shadow-xl shadow-red-strong group-hover:scale-105 transition-transform">
                     {m.initials}
                   </div>
                 )}
@@ -275,7 +275,7 @@ export default function Home() {
               ].map((c) => {
                 const Icon = c.icon
                 const inner = (
-                  <div className={`flex items-center gap-5 p-5 rounded-[1.5rem] border transition-all group ${
+                  <div className={`flex items-center gap-5 p-5 rounded-[1.5rem] border transition-all group shadow-red-lower ${
                     isDark ? 'bg-slate-900 border-slate-800 hover:border-slate-700' : 'bg-gray-50 border-gray-100 hover:shadow-md'
                   }`}>
                     <div className={`w-12 h-12 ${isDark ? c.darkBg : c.bg} rounded-2xl flex items-center justify-center shrink-0 transition-transform group-hover:scale-105`}>
@@ -291,7 +291,7 @@ export default function Home() {
               })}
             </div>
 
-            <div className={`p-8 rounded-[2rem] border ${isDark ? 'bg-slate-900 border-slate-800 shadow-2xl' : 'bg-gray-50 border-gray-100'}`}>
+            <div className={`p-8 rounded-[2rem] border shadow-red-strong ${isDark ? 'bg-slate-900 border-slate-800' : 'bg-gray-50 border-gray-100'}`}>
               <h3 className={`font-black text-xl mb-6 ${isDark ? 'text-white' : 'text-gray-900'}`}>Send a message</h3>
               {sent ? (
                 <div className="py-12 text-center animate-in fade-in zoom-in duration-500">
@@ -307,7 +307,7 @@ export default function Home() {
                   <input className={`w-full px-5 py-4 rounded-xl border outline-none transition-all ${isDark ? 'bg-slate-800 border-slate-700 text-white focus:border-[#C8102E]' : 'bg-white border-gray-200 focus:border-[#C8102E]'}`} type="email" placeholder="Email Address" value={form.email} onChange={(e) => setForm(f => ({ ...f, email: e.target.value }))} required />
                   <textarea className={`w-full px-5 py-4 rounded-xl border outline-none transition-all min-h-[120px] resize-none ${isDark ? 'bg-slate-800 border-slate-700 text-white focus:border-[#C8102E]' : 'bg-white border-gray-200 focus:border-[#C8102E]'}`} placeholder="Your message..." value={form.message} onChange={(e) => setForm(f => ({ ...f, message: e.target.value }))} required />
                   {contactError && <p className="text-xs text-red-500 font-bold">{contactError}</p>}
-                  <button type="submit" disabled={contactLoading} className="w-full bg-[#C8102E] hover:bg-[#a50d26] text-white font-black py-4 rounded-xl flex items-center justify-center gap-2 shadow-xl shadow-red-500/20 transition-all mt-4 disabled:opacity-50">
+                  <button type="submit" disabled={contactLoading} className="w-full bg-[#C8102E] hover:bg-[#a50d26] text-white font-black py-4 rounded-xl flex items-center justify-center gap-2 shadow-xl shadow-red-strong transition-all mt-4 disabled:opacity-50">
                     <Send size={18} />
                     {contactLoading ? 'Sending...' : 'Send Message'}
                   </button>
@@ -339,7 +339,7 @@ export default function Home() {
                   key={h.label} 
                   href={`tel:${h.number}`} 
                   className={`flex flex-col items-center justify-center p-6 rounded-[2rem] border transition-all hover:scale-105 active:scale-95 group ${
-                    isDark ? 'bg-slate-900 border-slate-800 hover:border-slate-700 shadow-xl' : 'bg-white border-gray-100 shadow-md hover:shadow-lg'
+                    isDark ? 'bg-slate-900 border-slate-800 hover:border-slate-700 shadow-red-lower' : 'bg-white border-gray-100 shadow-md shadow-red-lower hover:shadow-lg'
                   }`}
                 >
                   <div className={`w-12 h-12 ${h.bg} rounded-2xl flex items-center justify-center mb-4 transition-transform group-hover:scale-105`}>
