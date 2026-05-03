@@ -37,6 +37,10 @@ export const EmergencyProvider = ({ children }) => {
   const [arrivalType, setArrivalType] = useState('user'); // 'user' or 'hospital'
   const [stepCounter, setStepCounter] = useState(() => Number(localStorage.getItem('ll_step')) || 0);
   const [showCancelNotification, setShowCancelNotification] = useState(false);
+  const [chatMessages, setChatMessages] = useState(() => {
+    const saved = localStorage.getItem('ll_chat');
+    return saved ? JSON.parse(saved) : [{ role: 'ai', text: 'How can I assist with your medical emergency today?' }];
+  });
   
   const demoIntervalRef = useRef(null);
 
@@ -52,7 +56,8 @@ export const EmergencyProvider = ({ children }) => {
     localStorage.setItem('ll_countdown', demoCountdown.toString());
     localStorage.setItem('ll_demo_mode', demoMode.toString());
     localStorage.setItem('ll_step', stepCounter.toString());
-  }, [phase, activeAmbulance, nearestHospital, activeRoute, demoAmbulancePos, demoPath, demoProgress, demoCountdown, demoMode, stepCounter]);
+    localStorage.setItem('ll_chat', JSON.stringify(chatMessages));
+  }, [phase, activeAmbulance, nearestHospital, activeRoute, demoAmbulancePos, demoPath, demoProgress, demoCountdown, demoMode, stepCounter, chatMessages]);
 
   // Global background simulation loop
   useEffect(() => {
@@ -174,6 +179,7 @@ export const EmergencyProvider = ({ children }) => {
     demoProgress, setDemoProgress,
     demoCountdown, setDemoCountdown,
     demoMode, setDemoMode,
+    chatMessages, setChatMessages,
     showArrivalNotification, setShowArrivalNotification,
     arrivalType, setArrivalType,
     resetEmergency,
