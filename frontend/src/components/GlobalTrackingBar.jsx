@@ -73,7 +73,7 @@ export default function GlobalTrackingBar() {
                     <Clock size={10} className="inline mr-1 mb-0.5" /> {getEtaText()}
                   </span>
                   <button 
-                    onClick={(e) => { e.stopPropagation(); if(confirm('Cancel this ambulance request?')) resetEmergency(); }}
+                    onClick={(e) => { e.stopPropagation(); if(confirm('Cancel this ambulance request?')) resetEmergency(true); }}
                     className="p-1 hover:bg-red-500/10 rounded-full text-gray-400 hover:text-red-500 transition-colors"
                     title="Cancel Ambulance"
                   >

@@ -1010,7 +1010,7 @@ export default function Emergency() {
                       </div>
                     )}
                     <button 
-                      onClick={() => { if(confirm('Cancel booking?')) resetEmergency(); }}
+                      onClick={() => { if(confirm('Cancel booking?')) resetEmergency(true); }}
                       className="mt-4 text-[10px] font-bold text-gray-400 hover:text-red-500 uppercase tracking-widest transition-colors"
                     >
                       Cancel Booking
@@ -1035,7 +1035,7 @@ export default function Emergency() {
                       <Navigation size={18} /> Give Permission & Start Trip
                     </button>
                     <button 
-                      onClick={() => { if(confirm('Cancel booking?')) resetEmergency(); }}
+                      onClick={() => { if(confirm('Cancel booking?')) resetEmergency(true); }}
                       className="w-full mt-3 text-[10px] font-bold text-gray-400 hover:text-red-500 uppercase tracking-widest transition-colors py-2 text-center"
                     >
                       Cancel Request
@@ -1060,7 +1060,7 @@ export default function Emergency() {
                         <div className="h-full bg-[#C8102E] transition-all duration-1000" style={{ width: `${demoProgress * 100}%` }} />
                       </div>
                       <button 
-                        onClick={() => { if(confirm('Cancel trip?')) resetEmergency(); }}
+                        onClick={() => { if(confirm('Cancel trip?')) resetEmergency(true); }}
                         className="shrink-0 p-1 text-gray-400 hover:text-red-500 transition-colors"
                       >
                         <X size={14} />
