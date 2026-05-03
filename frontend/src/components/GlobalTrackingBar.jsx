@@ -57,7 +57,11 @@ export default function GlobalTrackingBar() {
             <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 shadow-lg transition-all duration-300 group-hover:scale-110 group-hover:rotate-6 ${
               isDark ? 'bg-[#C8102E]/20 text-[#C8102E]' : 'bg-red-50 text-[#C8102E]'
             }`}>
-              <Ambulance size={24} className={phase === 'trip_active' || phase === 'searching' ? 'animate-pulse' : 'transition-transform group-hover:scale-110'} />
+                <img 
+                  src="/ambulance.png" 
+                  alt="Ambulance" 
+                  className={`w-7 h-7 object-contain ${phase === 'trip_active' || phase === 'searching' ? 'animate-pulse' : ''}`} 
+                />
             </div>
 
             {/* Info Section */}
@@ -90,7 +94,7 @@ export default function GlobalTrackingBar() {
                 <motion.div 
                   className="h-full bg-[#C8102E] shadow-[0_0_10px_rgba(200,16,46,0.5)]"
                   initial={{ width: 0 }}
-                  animate={{ width: `${(phase === 'searching' ? (1 - demoCountdown/demoPath.length) : (demoProgress || 0)) * 100}%` }}
+                  animate={{ width: `${(phase === 'searching' && demoPath.length > 0 ? (1 - demoCountdown/demoPath.length) : (demoProgress || 0)) * 100}%` }}
                   transition={{ duration: 0.5 }}
                 />
               </div>
