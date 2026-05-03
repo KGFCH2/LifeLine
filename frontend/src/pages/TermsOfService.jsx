@@ -1,7 +1,9 @@
 import { FileText, Scale, AlertTriangle, CheckCircle, HandHeart, MapPin, ShieldCheck, CreditCard, Ban, Gavel, ScrollText } from 'lucide-react'
+import { useTheme } from '../context/ThemeContext.jsx'
 
 export default function TermsOfService() {
-  window.scrollTo(0, 0)
+  const { theme } = useTheme()
+  const isDark = theme === 'dark'
 
   const sections = [
     {
@@ -54,46 +56,50 @@ export default function TermsOfService() {
   ]
 
   return (
-    <div className="pb-24">
-      <div className="bg-gradient-to-br from-red-600 to-red-700 text-white p-5 pb-10 rounded-b-3xl">
-        <h1 className="text-2xl font-bold flex items-center gap-2">
-          <FileText size={24} className="animate-pulse" /> Terms of Service
-        </h1>
-        <p className="text-red-100 text-sm mt-1">Rules for using LifeLine+ safely and responsibly</p>
+    <div className={`pb-24 transition-colors duration-300 ${isDark ? 'bg-[#0f172a]' : 'bg-gray-50'}`}>
+      <div className={`p-10 pb-16 rounded-b-[3rem] shadow-xl ${isDark ? 'bg-slate-900 border-b border-slate-800' : 'bg-gradient-to-br from-[#C8102E] to-[#a50d26] text-white'}`}>
+        <div className="max-w-4xl mx-auto">
+          <h1 className="text-4xl font-black flex items-center gap-3">
+            <FileText size={36} className="animate-pulse" /> Terms of Service
+          </h1>
+          <p className={`${isDark ? 'text-slate-400' : 'text-red-100'} text-lg mt-2`}>Rules for using LifeLine+ safely and responsibly</p>
+        </div>
       </div>
 
-      <div className="px-4 mt-4 space-y-4">
-        <div className="flex items-start gap-3 bg-amber-50 dark:bg-amber-900/10 border border-amber-100 dark:border-amber-800 rounded-xl p-4 hover:shadow-md transition-shadow duration-300">
-          <AlertTriangle size={20} className="text-amber-600 dark:text-amber-400 shrink-0 mt-0.5 animate-bounce" />
-          <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
-            <strong className="text-amber-700 dark:text-amber-400">Important:</strong> LifeLine+ is a technology platform, not a medical or law enforcement agency. 
-            In life-threatening situations, always dial <strong>108</strong> (Ambulance) or <strong>100</strong> (Police) directly.
+      <div className="max-w-4xl mx-auto px-4 mt-12 space-y-6">
+        <div className={`flex items-start gap-4 rounded-2xl p-6 border transition-colors shadow-sm ${isDark ? 'bg-amber-900/10 border-amber-900/20 text-amber-400' : 'bg-amber-50 border-amber-100 text-amber-700'}`}>
+          <AlertTriangle size={24} className="shrink-0 mt-0.5 animate-bounce" />
+          <p className="text-sm leading-relaxed">
+            <strong className="font-black">Important:</strong> LifeLine+ is a technology platform, not a medical or law enforcement agency. 
+            In life-threatening situations, always dial <strong className="font-black text-red-500">108</strong> (Ambulance) or <strong className="font-black text-blue-500">100</strong> (Police) directly.
           </p>
         </div>
 
         {sections.map((section, i) => (
           <div 
             key={i} 
-            className="card group hover:shadow-lg transition-all duration-300 hover:-translate-y-1 cursor-default border-l-4 border-transparent hover:border-l-red-500"
+            className="card group hover:shadow-xl transition-all duration-300"
           >
-            <h2 className="font-bold text-gray-900 dark:text-white text-sm mb-2 flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-red-50 dark:bg-red-900/20 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
-                <section.icon size={16} className="text-red-500" />
+            <div className="flex items-center gap-4 mb-4">
+              <div className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-transform group-hover:scale-110 ${isDark ? 'bg-slate-800 text-red-500 shadow-lg' : 'bg-red-50 text-[#C8102E]'}`}>
+                <section.icon size={24} />
               </div>
-              {section.title}
-            </h2>
+              <h2 className={`font-black text-lg ${isDark ? 'text-white' : 'text-gray-900'}`}>{section.title}</h2>
+            </div>
+            
             {section.text && (
-              <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed pl-10">{section.text}</p>
+              <p className={`text-sm leading-relaxed pl-2 ${isDark ? 'text-slate-400' : 'text-gray-600'}`}>{section.text}</p>
             )}
+            
             {section.items && (
-              <ul className="space-y-2 mt-2 pl-10">
+              <ul className="space-y-3 mt-4 pl-2">
                 {section.items.map((item, j) => (
                   <li 
                     key={j} 
-                    className="flex items-start gap-2 text-sm text-gray-600 dark:text-gray-400 group-hover:text-gray-700 dark:group-hover:text-gray-300 transition-colors"
+                    className="flex items-start gap-3 text-sm group/li"
                   >
-                    <CheckCircle size={14} className="text-green-500 shrink-0 mt-0.5 group-hover:scale-125 transition-transform" />
-                    {item}
+                    <CheckCircle size={18} className="text-emerald-500 shrink-0 mt-0.5 group-hover/li:scale-110 transition-transform" />
+                    <span className={`transition-colors ${isDark ? 'text-slate-400 hover:text-slate-300' : 'text-gray-600 hover:text-gray-900'}`}>{item}</span>
                   </li>
                 ))}
               </ul>
@@ -101,9 +107,9 @@ export default function TermsOfService() {
           </div>
         ))}
 
-        <div className="card bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 text-center py-4">
-          <Scale size={20} className="mx-auto text-gray-400 mb-2" />
-          <p className="text-[11px] text-gray-400 dark:text-gray-500">
+        <div className="text-center pt-12">
+          <Scale size={32} className="mx-auto text-gray-400/30 mb-4" />
+          <p className="text-sm font-bold text-gray-400 tracking-widest uppercase">
             Last updated: {new Date().toLocaleDateString('en-IN', { year: 'numeric', month: 'long', day: 'numeric' })}
           </p>
         </div>
