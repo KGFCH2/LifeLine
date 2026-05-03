@@ -36,6 +36,7 @@ export const EmergencyProvider = ({ children }) => {
   const [showArrivalNotification, setShowArrivalNotification] = useState(false);
   const [arrivalType, setArrivalType] = useState('user'); // 'user' or 'hospital'
   const [stepCounter, setStepCounter] = useState(() => Number(localStorage.getItem('ll_step')) || 0);
+  const [showCancelNotification, setShowCancelNotification] = useState(false);
   
   const demoIntervalRef = useRef(null);
 
@@ -124,7 +125,12 @@ export const EmergencyProvider = ({ children }) => {
     setPhase('trip_active');
   };
 
-  const resetEmergency = () => {
+  const resetEmergency = (isUserCancel = false) => {
+    if (isUserCancel && ['searching', 'trip_active', 'arrived'].includes(phase)) {
+      setShowCancelNotification(true);
+      setTimeout(() => setShowCancelNotification(false), 5000);
+    }
+
     if (demoIntervalRef.current) clearInterval(demoIntervalRef.current);
     setPhase('init');
     setActiveAmbulance(null);
@@ -166,6 +172,7 @@ export const EmergencyProvider = ({ children }) => {
     resetEmergency,
     startLeg1Animation,
     startLeg2Animation,
+    showCancelNotification, setShowCancelNotification,
     logActivity: async (userId, type, title, status = 'completed') => {
       if (!userId) return;
       try {
