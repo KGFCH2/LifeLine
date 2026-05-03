@@ -11,7 +11,10 @@ import { useTheme } from '../context/ThemeContext.jsx'
 export default function Layout() {
   const location = useLocation()
   const { theme } = useTheme()
-  const { showArrivalNotification, setShowArrivalNotification, arrivalType } = useEmergency()
+  const { 
+    showArrivalNotification, setShowArrivalNotification, arrivalType,
+    showCancelNotification, setShowCancelNotification 
+  } = useEmergency()
   const isDark = theme === 'dark'
 
   useEffect(() => {
