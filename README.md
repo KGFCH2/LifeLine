@@ -16,6 +16,8 @@
 ![Firebase](https://img.shields.io/badge/Firebase-Auth%20%2B%20Admin-FFCA28?style=flat-square&logo=firebase)
 
 
+![Demo Mode](https://img.shields.io/badge/Status-Demo%20Mode-success?style=for-the-badge)
+
 ```text
 
                     ██╗     ██╗███████╗███████╗    ██╗     ██╗███╗   ██╗███████╗+
@@ -29,7 +31,10 @@
 
 ```
 
-**LifeLine+** is a production-ready full-stack emergency response platform built for India. It accelerates crisis coordination in hospitality and public spaces by combining real-time ambulance tracking, smart hospital discovery, traffic-aware routing, police alerts, doctor bookings, and AI-powered emergency verification — all in one unified mobile-first experience.
+**LifeLine+** is a high-fidelity, production-grade **Demonstration Platform** built for the Google Solution Challenge 2026. It serves as a comprehensive showcase of how modern AI, real-time geolocation, and cloud-native architecture can revolutionize emergency response in India. 
+
+> [!NOTE]
+> This platform is currently in **Demo Mode**, optimized for presentation and speed. Timeouts, driver acceptances, and AI verifications are tuned for immediate feedback during live demonstrations.
 
 ## 🌍 Live Deployment
 
