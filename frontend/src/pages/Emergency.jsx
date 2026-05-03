@@ -219,6 +219,13 @@ export default function Emergency() {
   const [aiContextData, setAiContextData] = useState([])
   const hasFetchedAiContext = useRef(false)
   const watchIdRef = useRef(null)
+  const mainContentRef = useRef(null)
+
+  const scrollToTop = () => {
+    if (mainContentRef.current) {
+      mainContentRef.current.scrollTo({ top: 0, behavior: 'smooth' })
+    }
+  }
   
   const fetchAllServicesForAI = async (coords) => {
     if (!window.google?.maps?.places) return
@@ -585,6 +592,7 @@ export default function Emergency() {
     setLoading(true)
     setSelectedAmbulance(ambulance)
     try {
+      scrollToTop()
       const res = await fetch(`${BACKEND_URL}/api/ambulance-request/request`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -689,6 +697,7 @@ export default function Emergency() {
   const verifyCivilian = async () => {
     const origin = stableGpsRef.current
     setLoading(true)
+    scrollToTop()
     try {
       const res = await fetch(`${BACKEND_URL}/api/verify/civilian`, {
         method: 'POST',
@@ -934,7 +943,10 @@ export default function Emergency() {
             })}
           </div>
 
-          <div className="flex-1 p-4 overflow-y-auto no-scrollbar space-y-4 pb-24">
+          <div 
+            ref={mainContentRef}
+            className="flex-1 p-4 overflow-y-auto no-scrollbar space-y-4 pb-24"
+          >
             
             {/* AI Assistant Panel */}
             {activeServiceType === 'ai' && (
@@ -1080,6 +1092,148 @@ export default function Emergency() {
               </div>
             )}
 
+            {/* ── CIVILIAN PROMPT (No ambulance found) ──────────────────── */}
+            {phase === 'civilian_prompt' && (
+              <div className={`p-6 border rounded-3xl shadow-xl animate-in fade-in duration-500 text-center ${isDark ? 'bg-slate-900 border-red-500/20' : 'bg-white border-red-100'}`}>
+                <div className="w-16 h-16 bg-red-50 text-[#C8102E] rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-sm">
+                  <AlertTriangle size={32} />
+                </div>
+                <h2 className={`text-lg font-black mb-2 ${isDark ? 'text-white' : 'text-gray-900'}`}>No Ambulance Found</h2>
+                <p className={`text-xs font-medium leading-relaxed mb-6 ${isDark ? 'text-slate-400' : 'text-gray-500'}`}>
+                  We couldn't locate any ambulances nearby at this moment. You can activate **Civilian Mode** to use your own vehicle with priority route alerts.
+                </p>
+                <div className="space-y-3">
+                  <button 
+                    onClick={() => { setPhase('civilian_direct'); scrollToTop(); }}
+                    className="w-full bg-amber-500 hover:bg-amber-600 text-white font-black py-4 rounded-xl flex items-center justify-center gap-2 shadow-lg transition-all active:scale-95"
+                  >
+                    <Car size={20} /> Start Civilian Mode
+                  </button>
+                  <button 
+                    onClick={() => setPhase('init')}
+                    className={`w-full py-3 text-xs font-bold uppercase tracking-widest ${isDark ? 'text-slate-500 hover:text-slate-300' : 'text-gray-400 hover:text-gray-600'}`}
+                  >
+                    Back to Search
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* ── CIVILIAN MODE DIRECT FORM ─────────────────────────────── */}
+            {phase === 'civilian_direct' && (
+              <div className={`p-6 border rounded-3xl shadow-xl animate-in slide-in-from-bottom duration-500 ${isDark ? 'bg-slate-900 border-amber-500/20' : 'bg-white border-amber-100'}`}>
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="w-12 h-12 bg-amber-100 text-amber-600 rounded-2xl flex items-center justify-center shadow-sm">
+                    <Car size={24} />
+                  </div>
+                  <div>
+                    <h2 className={`text-lg font-black ${isDark ? 'text-white' : 'text-gray-900'}`}>Civilian Mode</h2>
+                    <p className="text-[10px] font-bold text-amber-600 uppercase tracking-widest">Self-Drive Emergency</p>
+                  </div>
+                  <button onClick={() => setPhase('init')} className="ml-auto p-2 text-gray-400 hover:text-red-500">
+                    <X size={20} />
+                  </button>
+                </div>
+
+                <div className="space-y-4">
+                  <div className="space-y-1.5">
+                    <label className={`text-[10px] font-black uppercase tracking-widest ${isDark ? 'text-slate-400' : 'text-gray-500'}`}>Vehicle Number</label>
+                    <input 
+                      type="text" 
+                      placeholder="e.g. WB 02 AB 1234"
+                      value={civilianForm.vehicleNumber}
+                      onChange={(e) => setCivilianForm({...civilianForm, vehicleNumber: e.target.value})}
+                      className={`w-full px-4 py-3 rounded-xl text-sm font-bold border transition-all ${isDark ? 'bg-slate-800 border-slate-700 text-white focus:border-amber-500' : 'bg-gray-50 border-gray-100 focus:border-amber-500'}`}
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className={`text-[10px] font-black uppercase tracking-widest ${isDark ? 'text-slate-400' : 'text-gray-500'}`}>Purpose / Emergency</label>
+                    <textarea 
+                      placeholder="e.g. Transporting heart patient to City Hospital"
+                      value={civilianForm.purpose}
+                      onChange={(e) => setCivilianForm({...civilianForm, purpose: e.target.value})}
+                      rows={2}
+                      className={`w-full px-4 py-3 rounded-xl text-sm font-medium border transition-all resize-none ${isDark ? 'bg-slate-800 border-slate-700 text-white focus:border-amber-500' : 'bg-gray-50 border-gray-100 focus:border-amber-500'}`}
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className={`text-[10px] font-black uppercase tracking-widest ${isDark ? 'text-slate-400' : 'text-gray-500'}`}>Emergency Contact</label>
+                    <input 
+                      type="tel" 
+                      placeholder="Mobile number"
+                      value={civilianForm.contact}
+                      onChange={(e) => setCivilianForm({...civilianForm, contact: e.target.value})}
+                      className={`w-full px-4 py-3 rounded-xl text-sm font-bold border transition-all ${isDark ? 'bg-slate-800 border-slate-700 text-white focus:border-amber-500' : 'bg-gray-50 border-gray-100 focus:border-amber-500'}`}
+                    />
+                  </div>
+
+                  <button 
+                    onClick={verifyCivilian}
+                    disabled={loading || !civilianForm.vehicleNumber || !civilianForm.purpose}
+                    className="w-full bg-amber-500 hover:bg-amber-600 disabled:opacity-50 text-white font-black py-4 rounded-xl flex items-center justify-center gap-3 shadow-lg transition-all active:scale-95"
+                  >
+                    {loading ? <Loader2 size={20} className="animate-spin" /> : <Shield size={20} />}
+                    {loading ? 'AI Verification in Progress...' : 'Verify & Activate Civilian Mode'}
+                  </button>
+
+                  <p className="text-[10px] text-center text-gray-400 font-medium">
+                    Our Gemini AI will verify your emergency and alert nearby police stations.
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {/* ── CIVILIAN MODE ACTIVE / RESULT ────────────────────────── */}
+            {phase === 'civilian_active' && civilianResult && (
+              <div className={`p-6 border rounded-3xl shadow-xl animate-in zoom-in duration-500 ${isDark ? 'bg-slate-900 border-emerald-500/20' : 'bg-white border-emerald-100'}`}>
+                <div className="text-center mb-6">
+                  <div className={`w-16 h-16 mx-auto rounded-2xl flex items-center justify-center shadow-lg mb-4 ${civilianResult.verified ? 'bg-emerald-500 text-white' : 'bg-red-500 text-white'}`}>
+                    {civilianResult.verified ? <CheckCircle size={32} /> : <AlertTriangle size={32} />}
+                  </div>
+                  <h2 className={`text-xl font-black ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                    {civilianResult.verified ? 'Civilian Mode Active' : 'Verification Denied'}
+                  </h2>
+                  <p className={`text-xs font-bold mt-1 ${civilianResult.verified ? 'text-emerald-500' : 'text-red-500'}`}>
+                    {civilianResult.verified ? 'AI Verified Emergency' : 'Standard Traffic Laws Apply'}
+                  </p>
+                </div>
+
+                <div className={`p-4 rounded-2xl border mb-6 ${isDark ? 'bg-slate-800/50 border-slate-700' : 'bg-gray-50 border-gray-100'}`}>
+                   <div className="flex items-center justify-between mb-3 pb-3 border-b border-gray-200/10">
+                      <span className="text-[10px] font-black uppercase tracking-widest text-gray-400">Risk Level</span>
+                      <span className={`text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded ${
+                        civilianResult.aiResult?.riskLevel === 'high' ? 'bg-red-100 text-red-600' : 'bg-emerald-100 text-emerald-600'
+                      }`}>{civilianResult.aiResult?.riskLevel || 'Normal'}</span>
+                   </div>
+                   <p className={`text-xs font-medium leading-relaxed ${isDark ? 'text-slate-300' : 'text-gray-600'}`}>
+                     {civilianResult.aiResult?.reason || civilianResult.message}
+                   </p>
+                </div>
+
+                {civilianResult.verified && (
+                  <div className="space-y-3 mb-6">
+                    <div className="flex items-center gap-3 px-3 py-2 bg-blue-50 border border-blue-100 rounded-xl">
+                      <Shield size={16} className="text-blue-500" />
+                      <span className="text-[10px] font-bold text-blue-700">Nearby Police Stations Notified</span>
+                    </div>
+                    <div className="flex items-center gap-3 px-3 py-2 bg-emerald-50 border border-emerald-100 rounded-xl">
+                      <Navigation size={16} className="text-emerald-500" />
+                      <span className="text-[10px] font-bold text-emerald-700">Real-time Route Priority Enabled</span>
+                    </div>
+                  </div>
+                )}
+
+                <button 
+                  onClick={() => resetEmergency()}
+                  className="w-full bg-gray-900 text-white font-bold py-4 rounded-xl transition-all active:scale-95 text-sm"
+                >
+                  End Civilian Session
+                </button>
+              </div>
+            )}
+
             {/* Nearby List + Actions */}
             {activeServiceType !== 'ai' && nearbyHospitals.length > 0 && phase !== 'fetching_hospital' && (
               <div className="space-y-2">
@@ -1138,7 +1292,7 @@ export default function Emergency() {
                       {loading ? <Loader2 size={22} className="animate-spin" /> : <Ambulance size={22} />}
                       {loading ? 'Finding ambulances...' : 'Find Nearby Ambulances'}
                     </button>
-                    <button onClick={() => setPhase('civilian_direct')}
+                    <button onClick={() => { setPhase('civilian_direct'); scrollToTop(); }}
                       className="flex items-center justify-center w-full gap-2 py-3 text-sm font-semibold text-gray-600 transition-all bg-white border border-gray-200 shadow-sm rounded-2xl hover:bg-amber-50">
                       <Car size={16} /> Self-Drive / Civilian Mode
                     </button>
@@ -1236,7 +1390,7 @@ export default function Emergency() {
                   {ambulances.length === 0 && (
                     <div className="py-10 text-center bg-white border border-gray-100 rounded-2xl">
                       <p className="text-sm text-gray-400">No ambulances available nearby</p>
-                      <button onClick={() => setPhase('civilian_direct')} className="mt-3 text-[#C8102E] text-sm font-semibold hover:underline">
+                      <button onClick={() => { setPhase('civilian_direct'); scrollToTop(); }} className="mt-3 text-[#C8102E] text-sm font-semibold hover:underline">
                         Try Civilian Mode
                       </button>
                     </div>
