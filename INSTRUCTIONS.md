@@ -190,6 +190,7 @@ LifeLine+ uses a premium, high-contrast design system to ensure clarity during e
 - **Tech Stack Reveal**: Tech stack icons in Documentation appear in grayscale and smoothly reveal their brand colors on hover.
 - **Mobile Grid**: Complex layouts (like tech stacks) use a **2-column grid** on mobile to maximize information density without clutter.
 - **Auto-Scroll to Status**: The platform automatically scrolls the content area to the top whenever a critical status change occurs (e.g., booking an ambulance or activating Civilian Mode), ensuring users never miss vital real-time updates.
+- **Global Background Tracking**: Ambulance tracking and simulation persist globally across the platform. If a user navigates away from the Emergency page, the `GlobalTrackingBar` maintains real-time visibility, and system-wide notifications (Green for arrival, Red for cancellation) keep the user informed regardless of their current section.
 
 ---
 
