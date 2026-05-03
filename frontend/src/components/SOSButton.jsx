@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { AlertTriangle, Mic, X } from 'lucide-react'
+import { motion, AnimatePresence } from 'framer-motion'
 
 export default function SOSButton() {
   const navigate = useNavigate()
@@ -44,31 +45,47 @@ export default function SOSButton() {
 
   return (
     <>
-      <button
+      <motion.button
+        initial={{ scale: 0, rotate: -180 }}
+        animate={{ scale: 1, rotate: 0 }}
+        whileHover={{ scale: 1.1 }}
+        whileTap={{ scale: 0.9 }}
         onClick={() => setShowMenu(!showMenu)}
-        className="fixed bottom-20 right-4 z-40 w-14 h-14 bg-red-600 text-white rounded-full shadow-lg flex items-center justify-center hover:bg-red-700 transition-colors active:scale-95 animate-pulse-slow"
+        className="fixed bottom-6 right-6 z-[40] w-16 h-16 sm:w-20 sm:h-20 bg-[#C8102E] text-white rounded-full shadow-[0_10px_40px_rgba(200,16,46,0.6)] flex items-center justify-center border-4 border-white transition-colors overflow-hidden group"
         aria-label="SOS Emergency"
       >
-        {showMenu ? <X size={28} /> : <AlertTriangle size={28} />}
-      </button>
+        <motion.div
+          animate={{ scale: [1, 1.3, 1], opacity: [0.3, 0, 0.3] }}
+          transition={{ duration: 2, repeat: Infinity }}
+          className="absolute inset-0 bg-white rounded-full"
+        />
+        {showMenu ? <X size={32} className="relative z-10" /> : <AlertTriangle size={32} className="relative z-10" />}
+      </motion.button>
 
-      {showMenu && (
-        <div className="fixed bottom-44 right-4 z-50 flex flex-col gap-3 animate-slide-up">
-          <button
-            onClick={goEmergency}
-            className="bg-[#C8102E] text-white px-5 py-3 rounded-2xl shadow-lg font-bold text-sm hover:bg-[#a50d26] transition-all active:scale-95 whitespace-nowrap"
+      <AnimatePresence>
+        {showMenu && (
+          <motion.div 
+            initial={{ opacity: 0, y: 20, scale: 0.8 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 20, scale: 0.8 }}
+            className="fixed bottom-24 sm:bottom-32 right-6 z-[40] flex flex-col gap-3 items-end"
           >
-            Emergency Mode
-          </button>
-          <button
-            onClick={voiceTrigger}
-            className={`${listening ? 'bg-emerald-600' : 'bg-gray-800'} text-white px-5 py-3 rounded-2xl shadow-lg font-medium text-sm hover:opacity-90 transition-all active:scale-95 flex items-center gap-2 whitespace-nowrap`}
-          >
-            <Mic size={16} />
-            {listening ? 'Listening...' : 'Voice SOS'}
-          </button>
-        </div>
-      )}
+            <button
+              onClick={goEmergency}
+              className="bg-[#C8102E] text-white px-8 py-4 rounded-2xl shadow-2xl font-bold text-base hover:bg-[#a50d26] transition-all active:scale-95 whitespace-nowrap border border-white/20"
+            >
+              Emergency Mode
+            </button>
+            <button
+              onClick={voiceTrigger}
+              className={`${listening ? 'bg-emerald-600' : 'bg-slate-900'} text-white px-8 py-4 rounded-2xl shadow-2xl font-bold text-base hover:opacity-90 transition-all active:scale-95 flex items-center gap-2 whitespace-nowrap border border-white/10`}
+            >
+              <Mic size={20} />
+              {listening ? 'Listening...' : 'Voice SOS'}
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </>
   )
 }
