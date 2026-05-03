@@ -15,6 +15,7 @@ function getOrCreateUserStats(userId) {
       activeAmbulances: 0,
       avgResponseTime: '0m 00s',
       policeAlerts: 0,
+      level: 'Silver',
       lastUpdated: new Date().toISOString()
     });
   }
@@ -127,6 +128,21 @@ router.post('/activity', async (req, res) => {
       activities.pop();
     }
 
+    // UPDATE STATS AUTOMATICALLY
+    const currentStats = getOrCreateUserStats(userId);
+    if (type === 'ambulance' || type === 'civilian') {
+      currentStats.totalRequests += 1;
+      
+      // Update Level logic
+      if (currentStats.totalRequests >= 20) currentStats.level = 'Platinum';
+      else if (currentStats.totalRequests >= 10) currentStats.level = 'Gold';
+      else currentStats.level = 'Silver';
+
+      currentStats.lastUpdated = new Date().toISOString();
+      userStats.set(userId, currentStats);
+      await saveDocument('userStats', userId, currentStats);
+    }
+
     // Update time strings for relative times
     activities.forEach((activity, index) => {
       const diff = Date.now() - activity.timestamp;
@@ -136,7 +152,7 @@ router.post('/activity', async (req, res) => {
       else activity.time = `${Math.floor(diff / 86400000)} days ago`;
     });
 
-    res.json({ success: true, activity: newActivity });
+    res.json({ success: true, activity: newActivity, stats: currentStats });
   } catch (error) {
     console.error('Add activity error:', error);
     res.status(500).json({ error: 'Failed to add activity' });
