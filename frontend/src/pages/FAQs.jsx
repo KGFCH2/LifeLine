@@ -16,90 +16,68 @@ const faqs = [
   { icon: Smartphone, q: 'How do I add LifeLine+ to my phone home screen?', a: 'On Android Chrome: Tap the menu (3 dots) → "Add to Home screen". On iOS Safari: Tap the Share button → "Add to Home Screen". This installs the PWA for faster access, offline fallback, and a native app-like experience.' },
 ]
 
-function AccordionItem({ item, index, isOpen, onToggle }) {
-  const contentRef = useRef(null)
-  const [height, setHeight] = useState(0)
-
-  useEffect(() => {
-    if (contentRef.current) {
-      setHeight(contentRef.current.scrollHeight)
-    }
-  }, [])
-
-  const IconComponent = item.icon || HelpCircle
-
-  return (
-    <div className={`card overflow-hidden transition-all duration-300 group ${isOpen ? 'shadow-lg ring-1 ring-red-100 dark:ring-red-900/30' : 'hover:shadow-md hover:-translate-y-0.5'}`}>
-      <button
-        onClick={() => onToggle(isOpen ? null : index)}
-        className="w-full flex items-center justify-between text-left py-1 px-1"
-      >
-        <div className="flex items-center gap-3 pr-4">
-          <div className={`shrink-0 w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-300 ${isOpen ? 'bg-red-500 text-white shadow-lg shadow-red-500/30' : 'bg-gray-100 dark:bg-gray-800 text-gray-500 group-hover:bg-red-50 dark:group-hover:bg-red-900/20 group-hover:text-red-500'}`}>
-            <IconComponent size={18} className={isOpen ? 'animate-pulse' : ''} />
-          </div>
-          <span className={`text-sm font-semibold pr-4 leading-snug transition-colors duration-200 ${isOpen ? 'text-red-600 dark:text-red-400' : 'text-gray-900 dark:text-white group-hover:text-red-600 dark:group-hover:text-red-400'}`}>
-            {item.q}
-          </span>
-        </div>
-        <div className={`shrink-0 w-8 h-8 rounded-full flex items-center justify-center transition-all duration-300 ${isOpen ? 'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 rotate-180' : 'bg-gray-100 dark:bg-gray-800 text-gray-500 group-hover:bg-red-50 dark:group-hover:bg-red-900/20 group-hover:text-red-500'}`}>
-          <ChevronDown size={16} />
-        </div>
-      </button>
-      <div
-        className="transition-all duration-300 ease-out overflow-hidden"
-        style={{ maxHeight: isOpen ? height : 0, opacity: isOpen ? 1 : 0 }}
-      >
-        <div ref={contentRef} className="pt-3 pb-1 pl-14">
-          <div className="border-t border-gray-100 dark:border-gray-800 pt-3">
-            <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">{item.a}</p>
-          </div>
-        </div>
-      </div>
-    </div>
-  )
-}
+import FAQAccordion from '../components/FAQAccordion.jsx'
+import { useTheme } from '../context/ThemeContext.jsx'
 
 export default function FAQs() {
   const [open, setOpen] = useState(null)
+  const { theme } = useTheme()
+  const isDark = theme === 'dark'
 
   return (
-    <div className="pb-24">
-      <div className="bg-gradient-to-br from-red-600 to-red-700 text-white p-5 pb-10 rounded-b-3xl">
-        <h1 className="text-2xl font-bold flex items-center gap-2">
-          <HelpCircle size={24} className="animate-pulse" /> Frequently Asked Questions
+    <div className={`min-h-screen pb-24 transition-colors duration-500 ${isDark ? 'bg-[#0f172a]' : 'bg-gray-50'}`}>
+      <div className={`p-8 pb-16 rounded-b-[3rem] transition-all duration-500 shadow-2xl relative overflow-hidden ${
+        isDark 
+          ? 'bg-slate-900 border-b border-slate-800' 
+          : 'bg-gradient-to-br from-[#C8102E] to-[#A50D26] text-white'
+      }`}>
+        <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/2 blur-3xl pointer-events-none" />
+        
+        <h1 className="text-4xl font-black flex items-center gap-4 animate-in slide-in-from-left duration-500">
+          <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${isDark ? 'bg-red-500/20 text-red-500' : 'bg-white/20 text-white'}`}>
+            <HelpCircle size={28} />
+          </div>
+          Frequently Asked Questions
         </h1>
-        <p className="text-red-100 text-sm mt-1">Everything you need to know about LifeLine+</p>
+        <p className={`text-sm mt-4 font-bold max-w-lg leading-relaxed ${isDark ? 'text-slate-400' : 'text-red-100'}`}>
+          Find answers to common questions about India's most advanced emergency response platform.
+        </p>
       </div>
 
       <div className="px-4 mt-4 space-y-3">
         {/* Quick support banner with enhanced hover */}
-        <div className="bg-gradient-to-r from-blue-50 to-blue-100 dark:from-blue-900/10 dark:to-blue-800/10 border border-blue-100 dark:border-blue-800 rounded-xl p-4 flex items-start gap-3 mb-2 hover:shadow-md transition-all duration-300 group cursor-default">
-          <div className="w-10 h-10 rounded-xl bg-blue-500 flex items-center justify-center shrink-0 shadow-lg shadow-blue-500/30 group-hover:scale-110 transition-transform duration-300">
-            <MessageCircle size={20} className="text-white" />
+        <div className={`border rounded-2xl p-5 flex items-start gap-4 mb-4 transition-all duration-300 group cursor-default ${
+          isDark 
+            ? 'bg-slate-800 border-slate-700 hover:border-slate-600 shadow-xl' 
+            : 'bg-blue-50/50 border-blue-100 hover:border-blue-200 shadow-sm'
+        }`}>
+          <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 shadow-lg transition-transform duration-300 group-hover:scale-105 ${
+            isDark ? 'bg-slate-700 text-blue-400 border border-slate-600' : 'bg-blue-500 text-white'
+          }`}>
+            <MessageCircle size={24} />
           </div>
           <div className="flex-1">
-            <p className="text-sm font-semibold text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">Still have questions?</p>
-            <p className="text-xs text-gray-600 dark:text-gray-400 mt-0.5">
-              Reach out via the Contact page or email{' '}
+            <p className={`text-base font-black transition-colors ${isDark ? 'text-white' : 'text-gray-900 group-hover:text-blue-600'}`}>Still have questions?</p>
+            <p className={`text-sm mt-1 leading-relaxed font-bold ${isDark ? 'text-slate-200' : 'text-gray-600'}`}>
+              Our team is ready to help you 24/7. Reach out via the Contact page or email{' '}
               <a 
                 href="mailto:support@lifelineplus.in" 
-                className="text-blue-600 dark:text-blue-400 font-medium underline hover:text-blue-700 transition-colors inline-flex items-center gap-1"
+                className={`font-black underline transition-colors ${isDark ? 'text-blue-400 hover:text-blue-300' : 'text-blue-600 hover:text-blue-700'}`}
               >
                 support@lifelineplus.in
               </a>
             </p>
           </div>
-          <Award size={16} className="text-blue-400 opacity-0 group-hover:opacity-100 transition-opacity" />
         </div>
 
         {faqs.map((item, i) => (
-          <AccordionItem
+          <FAQAccordion
             key={i}
             item={item}
             index={i}
             isOpen={open === i}
             onToggle={setOpen}
+            isDark={isDark}
           />
         ))}
       </div>
