@@ -108,7 +108,7 @@ export default function HeroSlider({ onEmergency, onDoctors }) {
           <div className="flex flex-col sm:flex-row gap-3 mb-10 w-full sm:w-auto">
             <button
               onClick={onEmergency}
-              className="flex items-center justify-center gap-2.5 bg-[#C8102E] hover:bg-[#a50d26] text-white font-bold px-8 py-4 rounded-xl shadow-lg shadow-[#C8102E]/20 transition-all duration-200 text-base"
+              className="flex items-center justify-center gap-2.5 bg-[#C8102E] hover:bg-[#a50d26] text-white font-bold px-8 py-4 rounded-xl shadow-red-strong transition-all duration-200 text-base ring-1 ring-white/10 hover:ring-red-500/50"
             >
               <Ambulance size={20} />
               Book Emergency
