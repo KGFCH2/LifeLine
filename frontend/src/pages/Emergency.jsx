@@ -1039,13 +1039,26 @@ export default function Emergency() {
                         <Ambulance size={32} />
                       </div>
                       <h2 className={`text-xl font-black ${isDark ? 'text-white' : 'text-gray-900'}`}>Ambulance is here!</h2>
-                      <p className={`text-xs font-medium mt-1 ${isDark ? 'text-emerald-400' : 'text-emerald-700'}`}>Board safely and confirm your destination.</p>
+                      <p className={`text-xs font-medium mt-1 ${isDark ? 'text-emerald-400' : 'text-emerald-700'}`}>Please confirm your medical destination.</p>
                     </div>
+
+                    {nearestHospital && (
+                      <div className={`mb-6 p-4 rounded-2xl border ${isDark ? 'bg-slate-900/50 border-emerald-500/20' : 'bg-white border-emerald-100'}`}>
+                        <div className="flex items-center gap-3 mb-2">
+                          <div className="w-8 h-8 bg-red-50 rounded-lg flex items-center justify-center text-[#C8102E]">
+                            <Hospital size={16} />
+                          </div>
+                          <p className={`text-sm font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>{nearestHospital.name}</p>
+                        </div>
+                        <p className="text-[11px] text-gray-500 ml-11">{nearestHospital.address}</p>
+                      </div>
+                    )}
+
                     <button 
                       onClick={startHospitalTrip}
-                      className="w-full bg-[#C8102E] hover:bg-[#a50d26] text-white font-black py-4 rounded-xl flex items-center justify-center gap-3 shadow-lg text-sm transition-all"
+                      className="w-full bg-[#C8102E] hover:bg-[#a50d26] text-white font-black py-4 rounded-xl flex items-center justify-center gap-3 shadow-lg text-sm transition-all active:scale-95"
                     >
-                      <Navigation size={18} /> Give Permission & Start Trip
+                      <CheckCircle size={18} /> Confirm Pickup & Start Trip
                     </button>
                     <button 
                       onClick={() => { if(confirm('Cancel booking?')) resetEmergency(true); }}
