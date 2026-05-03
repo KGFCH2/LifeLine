@@ -238,32 +238,40 @@ export default function Emergency() {
       }
       
       const results = await new Promise((resolve, reject) => {
-        try {
-          const service = new window.google.maps.places.PlacesService(document.createElement('div'))
-          
-          // Map internal types to Google Places types
-          let googleType = type
-          if (type === 'police') googleType = 'police'
-          if (type === 'doctor') googleType = 'doctor'
-          if (type === 'pharmacy') googleType = 'pharmacy'
-          if (type === 'hospital') googleType = 'hospital'
+        let attempts = 0;
+        const checkReady = () => {
+          if (window.google?.maps?.places) {
+            try {
+              const service = new window.google.maps.places.PlacesService(document.createElement('div'))
+              
+              let googleType = type
+              if (type === 'police') googleType = 'police'
+              if (type === 'doctor') googleType = 'doctor'
+              if (type === 'pharmacy') googleType = 'pharmacy'
+              if (type === 'hospital') googleType = 'hospital'
 
-          service.nearbySearch({
-            location: new window.google.maps.LatLng(coords.lat, coords.lng),
-            rankBy: window.google.maps.places.RankBy.DISTANCE,
-            type: googleType
-          }, (res, status) => {
-            if (status === window.google.maps.places.PlacesServiceStatus.OK && res) {
-              resolve(res)
-            } else if (status === window.google.maps.places.PlacesServiceStatus.ZERO_RESULTS) {
-              resolve([])
-            } else {
-              reject(new Error(`Places Service status: ${status}`))
-            }
-          })
-        } catch (e) {
-          reject(e)
-        }
+              service.nearbySearch({
+                location: new window.google.maps.LatLng(coords.lat, coords.lng),
+                rankBy: window.google.maps.places.RankBy.DISTANCE,
+                type: googleType
+              }, (res, status) => {
+                if (status === window.google.maps.places.PlacesServiceStatus.OK && res) {
+                  resolve(res)
+                } else if (status === window.google.maps.places.PlacesServiceStatus.ZERO_RESULTS) {
+                  resolve([])
+                } else {
+                  reject(new Error(`Places Service status: ${status}`))
+                }
+              })
+            } catch (e) { reject(e) }
+          } else if (attempts < 10) {
+            attempts++;
+            setTimeout(checkReady, 500);
+          } else {
+            reject(new Error('Google Maps places library timeout'));
+          }
+        };
+        checkReady();
       })
 
       if (results.length === 0) {
@@ -624,12 +632,14 @@ export default function Emergency() {
   }
 
   const interpolatePath = (path, minPoints) => {
+    if (!path || path.length < 2) return path || [];
     if (path.length >= minPoints) return path;
     const interpolated = [];
     const factor = Math.ceil(minPoints / path.length);
     for (let i = 0; i < path.length - 1; i++) {
       const start = path[i];
       const end = path[i + 1];
+      if (!start || !end) continue;
       interpolated.push(start);
       for (let j = 1; j < factor; j++) {
         interpolated.push({
@@ -711,12 +721,12 @@ export default function Emergency() {
     return () => clearInterval(iv)
   }, [phase, civilianResult?.tempVehicleId, activeRoute, emit])
 
-  const sendMessage = async () => {
-    if (!inputMsg.trim()) return
-    const txt = inputMsg.trim()
-    setMessages(prev => [...prev, { role: 'user', text: txt }])
-    setInputMsg('')
+  const sendMessage = async (message) => {
+    if (!message || !message.trim()) return
+    const txt = message.trim()
+    
     try {
+      setLoading(true)
       const res = await fetch(`${BACKEND_URL}/api/verify/chat`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
@@ -731,9 +741,11 @@ export default function Emergency() {
         })
       })
       const data = await res.json()
-      setMessages(prev => [...prev, { role: 'ai', text: data?.text || 'Stay calm. Help is on the way.' }])
+      setChatMessages(prev => [...prev, { role: 'ai', text: data?.text || 'Stay calm. Help is on the way.' }])
     } catch {
-      setMessages(prev => [...prev, { role: 'ai', text: 'Unable to connect. Please call 108.' }])
+      setChatMessages(prev => [...prev, { role: 'ai', text: 'Unable to connect. Please call 108.' }])
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -928,11 +940,12 @@ export default function Emergency() {
               <div className="h-full -mt-4 -mx-4 overflow-hidden">
                 <LifeLineChatbot 
                   isDark={isDark} 
-                  userLocation={stableGpsRef.current} 
-                  nearbyServices={aiContextData}
-                  selectedHospital={nearestHospital}
-                  activeRoute={activeRoute}
-                  activeServiceType="Emergency Hub"
+                  chatMessages={chatMessages}
+                  onSendMessage={(txt) => {
+                    setChatMessages(prev => [...prev, { role: 'user', text: txt }]);
+                    sendMessage(txt);
+                  }}
+                  loading={loading}
                 />
               </div>
             )}
@@ -1239,7 +1252,7 @@ export default function Emergency() {
                   const eta = isSelected && activeRoute ? activeRoute.duration : (roughEta ? `~${roughEta} min` : null);
                   return (
                     <div
-                      key={h.id || idx}
+                      key={`${h.id || 'h'}-${idx}`}
                       onClick={() => handleHospitalSelect(h, idx)}
                       className={`group flex items-center gap-3 px-3.5 py-3 rounded-2xl border cursor-pointer transition-all ${
                         isSelected 
@@ -1358,8 +1371,8 @@ export default function Emergency() {
                   <Ambulance size={18} className="text-[#C8102E]" /> Nearby Ambulances
                 </h2>
                 <div className="space-y-3">
-                  {ambulances.map(amb => (
-                    <div key={amb.id} className="flex items-center gap-3 p-3.5 bg-white border border-gray-100 shadow-sm rounded-2xl">
+                  {ambulances.map((amb, idx) => (
+                    <div key={`${amb.id}-${idx}`} className="flex items-center gap-3 p-3.5 bg-white border border-gray-100 shadow-sm rounded-2xl">
                       <div className="flex items-center justify-center w-12 h-12 bg-red-50 rounded-xl shrink-0 transition-all duration-300 group-hover:scale-110 group-hover:rotate-6 shadow-sm">
                         <Ambulance size={22} className="text-[#C8102E] transition-transform group-hover:scale-110" />
                       </div>
