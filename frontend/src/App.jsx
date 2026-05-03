@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react'
 import { useAuth } from './context/AuthContext.jsx'
 import Layout from './components/Layout.jsx'
 import Loader from './components/Loader.jsx'
+import ProtectedRoute from './components/ProtectedRoute.jsx'
 import Home from './pages/Home.jsx'
 import Signup from './pages/Signup.jsx'
 import Emergency from './pages/Emergency.jsx'
@@ -56,14 +57,15 @@ function App() {
         <Route element={<Layout />}>
           <Route path="/" element={<Home />} />
           <Route path="/signup" element={<Signup />} />
-          <Route path="/emergency" element={<Emergency />} />
-          <Route path="/doctors" element={<Doctors />} />
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/profile" element={<Profile />} />
+          <Route path="/emergency" element={<ProtectedRoute><Emergency /></ProtectedRoute>} />
+          <Route path="/doctors" element={<ProtectedRoute><Doctors /></ProtectedRoute>} />
+          <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+          <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
           <Route path="/about" element={<About />} />
           <Route path="/contact" element={<Contact />} />
           <Route path="/faqs" element={<FAQs />} />
           <Route path="/privacy" element={<PrivacyPolicy />} />
+          <Route path="/privacy-security" element={<PrivacyPolicy />} />
           <Route path="/terms" element={<TermsOfService />} />
           <Route path="/docs" element={<Documentation />} />
           <Route path="*" element={<NotFound />} />
