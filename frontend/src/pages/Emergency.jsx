@@ -147,13 +147,15 @@ export default function Emergency() {
 
   const { 
     phase, setPhase, activeAmbulance, setActiveAmbulance, 
-    nearestHospital, setNearestHospital, activeRoute, setActiveRoute, 
+    nearestHospital, setNearestHospital, activeRoute, setActiveRoute,
+    isEmergencyActive,
+    chatMessages, setChatMessages, 
     demoProgress, setDemoProgress, demoAmbulancePos, setDemoAmbulancePos, 
     demoCountdown, setDemoCountdown, demoMode, setDemoMode, 
+    selectedHospitalIdx, setSelectedHospitalIdx,
     resetEmergency, startLeg1Animation, startLeg2Animation, 
     showArrivalNotification, setShowArrivalNotification, 
-    setDemoPath, demoPath, logActivity,
-    chatMessages, setChatMessages
+    setDemoPath, demoPath, logActivity
   } = useEmergency()
   const [destination, setDestination] = useState(nearestHospital?.location || null)
 
@@ -176,7 +178,6 @@ export default function Emergency() {
   const [chatOpen, setChatOpen] = useState(false)
   const [selectedAmbulance, setSelectedAmbulance] = useState(null)
   const [userAvatar, setUserAvatar] = useState(null)
-  const [selectedHospitalIdx, setSelectedHospitalIdx] = useState(-1)
   const [activeServiceType, setActiveServiceType] = useState('hospital')
   const [aiContextData, setAiContextData] = useState([])
   const hasFetchedAiContext = useRef(false)
@@ -530,7 +531,24 @@ export default function Emergency() {
       const res = await fetch(`${BACKEND_URL}/api/ambulance-request/nearby?lat=${origin.lat}&lng=${origin.lng}`)
       if (!res.ok) throw new Error('Ambulance fetch failed')
       const data = await res.json()
-      setAmbulances(data.ambulances || [])
+      setAmbulances(data.ambulances?.length ? data.ambulances : [
+        { 
+          id: 'amb-1', 
+          type: 'Basic Life Support', 
+          vehicleNumber: 'WB01-1234', 
+          eta: 4, 
+          location: { lat: origin.lat + 0.008, lng: origin.lng + 0.008 },
+          driver: { name: 'Rajesh Kumar' }
+        },
+        { 
+          id: 'amb-2', 
+          type: 'Advanced Cardiac Care', 
+          vehicleNumber: 'WB02-5678', 
+          eta: 7, 
+          location: { lat: origin.lat - 0.012, lng: origin.lng - 0.005 },
+          driver: { name: 'Suresh Das' }
+        }
+      ])
       setPhase('ambulance_list')
     } catch (e) { 
       console.warn('Ambulance fetch failed, using mocks')
@@ -613,13 +631,13 @@ export default function Emergency() {
         const best = data.routes[0]
         setActiveRoute(best)
         const rawPath = best.steps.map(s => s.end_location)
-        startLeg2Animation(interpolatePath(rawPath, 100)) // Ensure 100 steps for trip
+        startLeg2Animation(interpolatePath(rawPath, 120)) // Ensure 120 steps for trip
       } else {
         throw new Error('No routes found')
       }
     } catch (e) {
       console.warn('Trip leg 2 fetch failed, using mock path:', e)
-      const steps = 100
+      const steps = 120
       const path = Array.from({ length: steps + 1 }, (_, i) => ({
         lat: origin.lat + (currentDest.lat - origin.lat) * (i / steps),
         lng: origin.lng + (currentDest.lng - origin.lng) * (i / steps),
@@ -631,18 +649,17 @@ export default function Emergency() {
 
   const interpolatePath = (path, minPoints) => {
     if (!path || path.length < 2) return path || [];
-    if (path.length >= minPoints) return path;
     const interpolated = [];
-    const factor = Math.ceil(minPoints / path.length);
-    for (let i = 0; i < path.length - 1; i++) {
+    const totalSegments = path.length - 1;
+    const pointsPerSegment = Math.ceil(minPoints / totalSegments);
+    
+    for (let i = 0; i < totalSegments; i++) {
       const start = path[i];
       const end = path[i + 1];
-      if (!start || !end) continue;
-      interpolated.push(start);
-      for (let j = 1; j < factor; j++) {
+      for (let j = 0; j < pointsPerSegment; j++) {
         interpolated.push({
-          lat: start.lat + (end.lat - start.lat) * (j / factor),
-          lng: start.lng + (end.lng - start.lng) * (j / factor)
+          lat: start.lat + (end.lat - start.lat) * (j / pointsPerSegment),
+          lng: start.lng + (end.lng - start.lng) * (j / pointsPerSegment)
         });
       }
     }
@@ -659,13 +676,13 @@ export default function Emergency() {
       if (data.routes?.length) {
         const best = data.routes[0]
         const rawPath = best.steps.map(s => s.end_location)
-        startLeg1Animation(interpolatePath(rawPath, 80)) // Ensure 80 steps for arrival
+        startLeg1Animation(interpolatePath(rawPath, 120)) // Ensure 120 steps for arrival
       } else {
         throw new Error('No route for Leg 1')
       }
     } catch (e) {
       console.warn('Leg 1 real route failed, using jittered path:', e)
-      const steps = 80
+      const steps = 120
       const path = Array.from({ length: steps + 1 }, (_, i) => ({
         lat: ambulanceLoc.lat + (userLoc.lat - ambulanceLoc.lat) * (i / steps) + (Math.sin(i/2) * 0.0001),
         lng: ambulanceLoc.lng + (userLoc.lng - ambulanceLoc.lng) * (i / steps) + (Math.cos(i/2) * 0.0001),
@@ -803,8 +820,10 @@ export default function Emergency() {
 
   const routePoly = activeRoute ? [activeRoute] : routes
 
-  // Map center: only use a real user location
-  const mapCenter = userLocation || stableGpsRef.current
+  // Map center: use hospital in completed phase, otherwise user location
+  const mapCenter = (phase === 'completed' && nearestHospital?.location) 
+    ? nearestHospital.location 
+    : (userLocation || stableGpsRef.current)
 
   if (!user) return showLogin ? <LoginModal onClose={() => navigate('/')} /> : null
 
@@ -818,7 +837,11 @@ export default function Emergency() {
         </button>
         <div className="flex-1 min-w-0">
           <p className="text-[10px] font-bold text-[#C8102E] tracking-widest uppercase mb-0.5 truncate">
-             {phase === 'tracking' ? 'Live Tracking' : phase === 'civilian_active' ? 'Civilian Mode' : 'Emergency Assistance'}
+             {phase === 'searching' ? 'Ambulance En Route' : 
+              phase === 'tracking' ? 'Live Tracking' : 
+              phase === 'arrived' ? 'Ambulance Arrived' :
+              phase === 'trip_active' ? 'Heading to Hospital' :
+              phase === 'civilian_active' ? 'Civilian Mode' : 'Emergency Assistance'}
           </p>
           <h1 className={`font-bold text-lg flex items-center gap-1.5 leading-none truncate ${isDark ? 'text-white' : 'text-gray-900'}`}>
             <Siren size={18} className="text-[#C8102E] shrink-0" />
@@ -872,6 +895,7 @@ export default function Emergency() {
                 demoProgress={demoProgress}
                 userAvatar={userAvatar}
                 isDark={isDark}
+                phase={phase}
               />
             ) : (
               <div className={`h-full flex flex-col items-center justify-center text-center px-6 transition-colors ${isDark ? 'bg-slate-800' : 'bg-white'}`}>
@@ -891,7 +915,8 @@ export default function Emergency() {
         <div className={`flex flex-col w-full h-[60vh] lg:h-full lg:w-1/2 lg:border-l overflow-hidden transition-colors ${isDark ? 'bg-[#0f172a] border-slate-700' : 'bg-white border-gray-100'}`}>
           
           {/* CATEGORY TABS */}
-          <div className={`flex gap-2 px-4 pt-4 pb-3 overflow-x-auto border-b shrink-0 no-scrollbar transition-colors ${isDark ? 'border-slate-800' : 'border-gray-100'}`}>
+          {!isEmergencyActive && (
+            <div className={`flex gap-2 px-4 pt-4 pb-3 overflow-x-auto border-b shrink-0 no-scrollbar transition-colors ${isDark ? 'border-slate-800' : 'border-gray-100'}`}>
             {[
               { id: 'hospital', label: 'Hospitals', icon: Building2 },
               { id: 'police', label: 'Police', icon: Shield },
@@ -926,7 +951,8 @@ export default function Emergency() {
                 </button>
               )
             })}
-          </div>
+            </div>
+          )}
 
           <div 
             ref={mainContentRef}
@@ -969,16 +995,20 @@ export default function Emergency() {
             )}
 
             {/* ── PERSISTENT TRIP STATUS ─────────────────────────────────── */}
-            {['searching', 'tracking', 'arrived', 'trip_active', 'civilian_active', 'completed'].includes(phase) && (
+            {isEmergencyActive && (
               <div className="mb-6 animate-in slide-in-from-top duration-500">
                 {/* Searching / Tracking Phase */}
                 {(phase === 'searching' || phase === 'tracking') && (
-                  <div className={`p-6 text-center rounded-3xl border animate-pulse ${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-gray-100 shadow-lg'}`}>
+                  <div className={`p-5 border rounded-2xl animate-in slide-in-from-bottom-4 duration-500 shadow-red-lower ${isDark ? 'bg-slate-900 border-[#C8102E]/30' : 'bg-white border-red-100'}`}>
                     <div className="relative w-20 h-20 mx-auto mb-4">
                       <div className="absolute inset-0 border-4 border-[#C8102E]/10 rounded-full" />
                       <div className="absolute inset-0 border-4 border-[#C8102E] border-t-transparent rounded-full animate-spin" />
-                      <div className="absolute inset-0 flex items-center justify-center">
-                        <Ambulance size={28} className="text-[#C8102E]" />
+                      <div className="absolute inset-0 flex items-center justify-center p-2">
+                        <img 
+                          src="/ambulance.png" 
+                          alt="Ambulance" 
+                          className="w-full h-full object-contain animate-float-gentle drop-shadow-md" 
+                        />
                       </div>
                     </div>
                     <h2 className={`text-lg font-black ${isDark ? 'text-white' : 'text-gray-900'}`}>
@@ -1006,7 +1036,7 @@ export default function Emergency() {
 
                 {/* Arrived Phase */}
                 {phase === 'arrived' && (
-                  <div className={`p-6 border rounded-3xl animate-in zoom-in duration-500 ${isDark ? 'bg-emerald-900/20 border-emerald-500/30 shadow-2xl' : 'bg-emerald-50 border-emerald-200 shadow-xl'}`}>
+                  <div className={`p-6 border rounded-3xl animate-in zoom-in duration-500 shadow-red-strong ${isDark ? 'bg-emerald-900/20 border-emerald-500/30' : 'bg-emerald-50 border-emerald-200'}`}>
                     <div className="flex flex-col items-center text-center mb-6">
                       <div className="w-16 h-16 bg-emerald-500 text-white rounded-2xl flex items-center justify-center shadow-lg mb-4 animate-bounce">
                         <Ambulance size={32} />
@@ -1029,7 +1059,7 @@ export default function Emergency() {
 
                     <button 
                       onClick={startHospitalTrip}
-                      className="w-full bg-[#C8102E] hover:bg-[#a50d26] text-white font-black py-4 rounded-xl flex items-center justify-center gap-3 shadow-lg text-sm transition-all active:scale-95"
+                      className="w-full bg-[#C8102E] hover:bg-[#a50d26] text-white font-black py-4 rounded-xl flex items-center justify-center gap-3 shadow-lg text-sm transition-all active:scale-95 animate-pulse-subtle ring-4 ring-[#C8102E]/20"
                     >
                       <CheckCircle size={18} /> Confirm Pickup & Start Trip
                     </button>
@@ -1044,7 +1074,7 @@ export default function Emergency() {
 
                 {/* Trip Active (Leg 2) */}
                 {phase === 'trip_active' && (
-                  <div className={`p-5 border rounded-2xl transition-all ${isDark ? 'bg-blue-900/10 border-blue-500/30' : 'bg-blue-50 border-blue-200 shadow-md'}`}>
+                  <div className={`p-5 border rounded-2xl transition-all shadow-red-lower ${isDark ? 'bg-blue-900/10 border-blue-500/30' : 'bg-blue-50 border-blue-200'}`}>
                     <div className="flex items-center gap-3 mb-4">
                       <Loader2 size={20} className="text-[#C8102E] animate-spin" />
                       <h2 className={`font-bold text-sm ${isDark ? 'text-white' : 'text-gray-900'}`}>En Route to {nearestHospital?.name}</h2>
@@ -1071,7 +1101,7 @@ export default function Emergency() {
 
                 {/* Trip Completed */}
                 {phase === 'completed' && (
-                  <div className={`p-6 border rounded-3xl text-center shadow-xl animate-in fade-in duration-700 ${isDark ? 'bg-slate-900 border-emerald-500/30' : 'bg-white border-emerald-100'}`}>
+                  <div className={`p-6 border rounded-3xl text-center shadow-red-strong animate-in fade-in duration-700 ${isDark ? 'bg-slate-900 border-emerald-500/30' : 'bg-white border-emerald-100'}`}>
                     <div className="w-14 h-14 bg-emerald-500 text-white rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
                       <CheckCircle size={28} />
                     </div>
@@ -1081,10 +1111,10 @@ export default function Emergency() {
                       <span className="text-emerald-500 font-bold">Happy Life, Healthy Living.</span>
                     </p>
                     <button 
-                      onClick={() => window.location.reload()}
+                      onClick={() => { resetEmergency(); window.location.reload(); }}
                       className="w-full bg-gray-900 text-white font-bold py-3 rounded-xl hover:bg-black transition-all active:scale-95 text-xs"
                     >
-                      Finish Session
+                      Finish Session & Unlock
                     </button>
                   </div>
                 )}
@@ -1093,7 +1123,7 @@ export default function Emergency() {
 
             {/* ── CIVILIAN PROMPT (No ambulance found) ──────────────────── */}
             {phase === 'civilian_prompt' && (
-              <div className={`p-6 border rounded-3xl shadow-xl animate-in fade-in duration-500 text-center ${isDark ? 'bg-slate-900 border-red-500/20' : 'bg-white border-red-100'}`}>
+              <div className={`p-6 border rounded-3xl shadow-red-strong animate-in fade-in duration-500 text-center ${isDark ? 'bg-slate-900 border-red-500/20' : 'bg-white border-red-100'}`}>
                 <div className="w-16 h-16 bg-red-50 text-[#C8102E] rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-sm">
                   <AlertTriangle size={32} />
                 </div>
@@ -1234,7 +1264,7 @@ export default function Emergency() {
             )}
 
             {/* Nearby List + Actions */}
-            {activeServiceType !== 'ai' && nearbyHospitals.length > 0 && !['searching', 'tracking', 'arrived', 'trip_active', 'civilian_active', 'completed'].includes(phase) && phase !== 'fetching_hospital' && (
+            {!isEmergencyActive && activeServiceType !== 'ai' && nearbyHospitals.length > 0 && phase !== 'fetching_hospital' && (
               <div className="space-y-2">
                 <div className="flex items-center justify-between px-1">
                   <p className={`text-[10px] font-bold uppercase tracking-widest ${isDark ? 'text-slate-500' : 'text-gray-400'}`}>{activeServiceType}s Nearby</p>
@@ -1323,7 +1353,7 @@ export default function Emergency() {
                     <button
                       key={route.id}
                       onClick={() => setActiveRoute(route)}
-                      className={`w-full bg-white rounded-2xl border text-left flex items-center gap-3 p-4 transition-all shadow-sm ${activeRoute?.id === route.id ? 'border-[#C8102E] ring-1 ring-[#C8102E]/20' : 'border-gray-100'}`}
+                      className={`w-full bg-white rounded-2xl border text-left flex items-center gap-3 p-4 transition-all shadow-sm hover:shadow-red-strong hover:scale-[1.01] ${activeRoute?.id === route.id ? 'border-[#C8102E] ring-1 ring-[#C8102E]/20' : 'border-gray-100'}`}
                     >
                       <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${route.fastest ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-100 text-gray-500'}`}>
                         <Navigation size={18} />
@@ -1370,9 +1400,13 @@ export default function Emergency() {
                 </h2>
                 <div className="space-y-3">
                   {ambulances.map((amb, idx) => (
-                    <div key={`${amb.id}-${idx}`} className="flex items-center gap-3 p-3.5 bg-white border border-gray-100 shadow-sm rounded-2xl">
+                    <div key={`${amb.id}-${idx}`} className="flex items-center gap-3 p-3.5 bg-white border border-gray-100 shadow-sm rounded-2xl transition-all hover:shadow-red-strong hover:scale-[1.01]">
                       <div className="flex items-center justify-center w-12 h-12 bg-red-50 rounded-xl shrink-0 transition-all duration-300 group-hover:scale-110 group-hover:rotate-6 shadow-sm">
-                        <Ambulance size={22} className="text-[#C8102E] transition-transform group-hover:scale-110" />
+                        <img 
+                          src="/ambulance.png" 
+                          alt="Ambulance" 
+                          className="w-8 h-8 object-contain transition-transform group-hover:scale-110" 
+                        />
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-semibold text-gray-900">{amb.type}</p>
