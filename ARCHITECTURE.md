@@ -37,6 +37,12 @@ graph TB
         Gemini["Gemini 1.5 Flash"]
     end
 
+    subgraph Simulation["🏗️ Demo / Simulation Layer"]
+        SimAmbulance["Fast Driver Acceptance<br/>(5s Timeout)"]
+        SimMovement["Smooth GPS Animation<br/>Interpolator"]
+        SimAI["Verification Pipeline<br/>Failover Logic"]
+    end
+
     PWA --> Router
     PWA --> Geo
     PWA --> Speech
