@@ -1,14 +1,16 @@
-import { BookOpen, Code, Zap, Server, MapPin, Shield, Smartphone, Globe } from 'lucide-react'
+import { BookOpen, Code, Zap, Server, MapPin, Shield, Smartphone, Globe, ChevronRight } from 'lucide-react'
+import { useTheme } from '../context/ThemeContext.jsx'
 
 export default function Documentation() {
-  window.scrollTo(0, 0)
+  const { theme } = useTheme()
+  const isDark = theme === 'dark'
 
   const sections = [
     {
       icon: Globe,
       title: 'Getting Started',
       steps: [
-        'Open http://localhost:5173 in a modern browser (Chrome, Edge, Safari)',
+        'Open the platform in a modern browser (Chrome, Edge, Safari)',
         'Allow location access when prompted — this powers all nearby discovery',
         'Sign in with Google or use the email fallback for full features',
         'Tap the Emergency button or explore Hospitals, Police, Doctors tabs',
@@ -76,64 +78,85 @@ export default function Documentation() {
   ]
 
   return (
-    <div className="pb-24">
-      <div className="bg-gradient-to-br from-red-600 to-red-700 text-white p-5 pb-10 rounded-b-3xl">
-        <h1 className="text-2xl font-bold flex items-center gap-2">
-          <BookOpen size={24} /> Documentation
-        </h1>
-        <p className="text-red-100 text-sm mt-1">How to use, integrate, and extend LifeLine+</p>
+    <div className={`pb-24 transition-colors duration-300 ${isDark ? 'bg-[#0f172a]' : 'bg-gray-50'}`}>
+      <div className={`p-10 pb-16 rounded-b-[3rem] shadow-xl ${isDark ? 'bg-slate-900 border-b border-slate-800' : 'bg-gradient-to-br from-indigo-600 to-indigo-800 text-white'}`}>
+        <div className="max-w-4xl mx-auto">
+          <h1 className="text-4xl font-black flex items-center gap-3 text-white">
+            <BookOpen size={36} /> Documentation
+          </h1>
+          <p className={`${isDark ? 'text-slate-400' : 'text-indigo-100'} text-lg mt-2 font-medium`}>How to use, integrate, and extend LifeLine+</p>
+        </div>
       </div>
 
-      <div className="px-4 mt-4 space-y-4">
-        <div className="flex items-start gap-3 bg-green-50 dark:bg-green-900/10 border border-green-100 dark:border-green-800 rounded-xl p-4">
-          <Zap size={20} className="text-green-600 dark:text-green-400 shrink-0 mt-0.5" />
-          <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
-            <strong className="text-green-700 dark:text-green-400">Quick Tip:</strong> For the best experience, 
+      <div className="max-w-4xl mx-auto px-4 mt-12 space-y-6">
+        <div className={`flex items-start gap-4 rounded-2xl p-6 border transition-colors shadow-sm ${isDark ? 'bg-emerald-900/10 border-emerald-900/20 text-emerald-400' : 'bg-emerald-50 border-emerald-100 text-emerald-700'}`}>
+          <Zap size={24} className="shrink-0 mt-0.5 animate-pulse" />
+          <p className="text-sm leading-relaxed">
+            <strong className="font-black">Quick Tip:</strong> For the best experience, 
             enable high-accuracy GPS and keep the app open during active emergencies for real-time tracking.
           </p>
         </div>
 
-        {sections.map((section, i) => (
-          <div key={i} className="card">
-            <div className="flex items-center gap-2 mb-3">
-              <div className="w-8 h-8 rounded-lg bg-red-50 dark:bg-red-900/20 flex items-center justify-center text-red-600 dark:text-red-400">
-                <section.icon size={16} />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {sections.map((section, i) => (
+            <div key={i} className="card group hover:shadow-xl transition-all duration-300">
+              <div className="flex items-center gap-4 mb-6">
+                <div className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-transform group-hover:scale-110 ${isDark ? 'bg-slate-800 text-indigo-400' : 'bg-indigo-50 text-indigo-600'}`}>
+                  <section.icon size={24} />
+                </div>
+                <h2 className={`font-black text-lg ${isDark ? 'text-white' : 'text-gray-900'}`}>{section.title}</h2>
               </div>
-              <h2 className="font-bold text-gray-900 dark:text-white text-sm">{section.title}</h2>
+              <ul className="space-y-3">
+                {section.steps.map((step, j) => (
+                  <li key={j} className="flex items-start gap-3 text-sm group/li">
+                    <span className={`w-6 h-6 rounded-lg font-black text-[10px] flex items-center justify-center shrink-0 mt-0.5 transition-colors ${isDark ? 'bg-slate-800 text-slate-400 group-hover/li:text-indigo-400' : 'bg-gray-100 text-gray-500 group-hover/li:text-indigo-600'}`}>
+                      {j + 1}
+                    </span>
+                    <span className={`leading-relaxed ${isDark ? 'text-slate-400' : 'text-gray-600'}`}>{step}</span>
+                  </li>
+                ))}
+              </ul>
             </div>
-            <ol className="space-y-2">
-              {section.steps.map((step, j) => (
-                <li key={j} className="flex items-start gap-3 text-sm text-gray-600 dark:text-gray-400">
-                  <span className="w-5 h-5 rounded-full bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 text-xs font-bold flex items-center justify-center shrink-0 mt-0.5">
-                    {j + 1}
-                  </span>
-                  <span className="leading-relaxed">{step}</span>
-                </li>
-              ))}
-            </ol>
-          </div>
-        ))}
+          ))}
+        </div>
 
-        <div className="card">
-          <h2 className="font-bold text-gray-900 dark:text-white text-sm mb-2 flex items-center gap-2">
-            <Code size={14} className="text-red-500" />
+        <div className="card p-8">
+          <h2 className={`font-black text-xl mb-6 flex items-center gap-3 ${isDark ? 'text-white' : 'text-gray-900'}`}>
+            <Code size={24} className="text-indigo-500" />
             Tech Stack
           </h2>
-          <div className="grid grid-cols-2 gap-2 text-xs text-gray-600 dark:text-gray-400">
-            <div className="bg-gray-50 dark:bg-gray-800 rounded-lg px-3 py-2">React 18 + Vite</div>
-            <div className="bg-gray-50 dark:bg-gray-800 rounded-lg px-3 py-2">Tailwind CSS</div>
-            <div className="bg-gray-50 dark:bg-gray-800 rounded-lg px-3 py-2">Node.js + Express</div>
-            <div className="bg-gray-50 dark:bg-gray-800 rounded-lg px-3 py-2">Socket.io</div>
-            <div className="bg-gray-50 dark:bg-gray-800 rounded-lg px-3 py-2">Google Maps JS API</div>
-            <div className="bg-gray-50 dark:bg-gray-800 rounded-lg px-3 py-2">Gemini 1.5 Flash</div>
-            <div className="bg-gray-50 dark:bg-gray-800 rounded-lg px-3 py-2">Firebase Auth + Admin</div>
-            <div className="bg-gray-50 dark:bg-gray-800 rounded-lg px-3 py-2">Vite PWA Plugin</div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
+            {[
+              { name: 'React 18 + Vite', slug: 'react' },
+              { name: 'Tailwind CSS', slug: 'tailwindcss' },
+              { name: 'Node.js + Express', slug: 'nodedotjs' },
+              { name: 'Socket.io', slug: 'socketdotio' },
+              { name: 'Google Maps JS', slug: 'googlemaps' },
+              { name: 'Gemini 1.5 Flash', slug: 'google' },
+              { name: 'Firebase Auth', slug: 'firebase' },
+              { name: 'Vite PWA Plugin', slug: 'pwa' }
+            ].map(tech => (
+              <div key={tech.name} className={`flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all hover:scale-105 group ${isDark ? 'bg-slate-800 text-slate-300' : 'bg-white shadow-sm border border-gray-100 text-gray-700'}`}>
+                <img 
+                  src={`https://cdn.simpleicons.org/${tech.slug}`} 
+                  className="w-5 h-5 object-contain grayscale transition-all duration-300 group-hover:grayscale-0" 
+                  alt={tech.name} 
+                />
+                {tech.name}
+              </div>
+            ))}
           </div>
         </div>
 
-        <p className="text-[11px] text-gray-400 dark:text-gray-500 text-center pt-2">
-          See ARCHITECTURE.md, CORE_LOGIC.md, and INSTRUCTIONS.md in the project root for deep-dive docs.
-        </p>
+        <div className={`p-6 rounded-2xl border text-center transition-colors ${isDark ? 'bg-slate-900/50 border-slate-800 text-slate-500' : 'bg-gray-50 border-gray-100 text-gray-400'}`}>
+          <p className="text-xs font-medium">
+            See{' '}
+            <a href="https://github.com/KGFCH2/LifeLine/blob/main/ARCHITECTURE.md" target="_blank" rel="noopener noreferrer" className="text-[#C8102E] font-bold hover:underline">ARCHITECTURE.md</a>,{' '}
+            <a href="https://github.com/KGFCH2/LifeLine/blob/main/CORE_LOGIC.md" target="_blank" rel="noopener noreferrer" className="text-[#C8102E] font-bold hover:underline">CORE_LOGIC.md</a>, and{' '}
+            <a href="https://github.com/KGFCH2/LifeLine/blob/main/INSTRUCTIONS.md" target="_blank" rel="noopener noreferrer" className="text-[#C8102E] font-bold hover:underline">INSTRUCTIONS.md</a>{' '}
+            in the project root for deep-dive docs.
+          </p>
+        </div>
       </div>
     </div>
   )
