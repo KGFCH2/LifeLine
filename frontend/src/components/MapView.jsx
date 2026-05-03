@@ -356,14 +356,20 @@ export default function MapView({
         demoPathRef.current = new window.google.maps.Polyline({
           path: demoPath, map: mapRef.current, strokeColor: '#16a34a', strokeWeight: 5, zIndex: 20
         })
-      } else { demoPathRef.current.setPath(demoPath) }
+      } else { 
+        demoPathRef.current.setPath(demoPath)
+        if (demoPathRef.current.getMap() !== mapRef.current) demoPathRef.current.setMap(mapRef.current)
+      }
     }
     if (demoAmbulancePos) {
       if (!demoMarkerRef.current) {
         demoMarkerRef.current = new window.google.maps.Marker({
           position: demoAmbulancePos, map: mapRef.current, icon: getAmbulanceIcon(), zIndex: 500
         })
-      } else { demoMarkerRef.current.setPosition(demoAmbulancePos) }
+      } else { 
+        demoMarkerRef.current.setPosition(demoAmbulancePos)
+        if (demoMarkerRef.current.getMap() !== mapRef.current) demoMarkerRef.current.setMap(mapRef.current)
+      }
     }
   }, [demoMode, demoPath, demoAmbulancePos, mapLoaded])
 
