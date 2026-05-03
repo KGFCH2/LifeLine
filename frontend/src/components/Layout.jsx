@@ -56,6 +56,31 @@ export default function Layout() {
           </div>
         </div>
       )}
+
+      {/* Global Cancellation Notification */}
+      {showCancelNotification && (
+        <div className="fixed z-[200] top-20 left-4 right-4 max-w-md mx-auto animate-in slide-in-from-top duration-500">
+          <div className="flex items-center gap-4 p-4 text-white shadow-2xl bg-red-500 rounded-[2rem] border border-white/20 backdrop-blur-md">
+            <div className="flex items-center justify-center w-12 h-12 bg-white rounded-2xl shrink-0 shadow-lg">
+              <X size={22} className="text-red-600" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <h3 className="flex items-center gap-2 font-black text-sm uppercase tracking-wider">
+                Booking Cancelled <X size={16} />
+              </h3>
+              <p className="text-[11px] font-medium text-red-50 opacity-90 truncate">
+                Your ambulance request has been cancelled successfully.
+              </p>
+            </div>
+            <button 
+              onClick={() => setShowCancelNotification(false)} 
+              className="flex items-center justify-center w-8 h-8 rounded-xl bg-red-600 hover:bg-red-700 transition-colors shadow-inner"
+            >
+              <X size={16} />
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
