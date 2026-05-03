@@ -72,7 +72,7 @@ export const EmergencyProvider = ({ children }) => {
           setDemoAmbulancePos(pos);
           setDemoProgress(next / (demoPath.length - 1));
           
-          if (phase === 'searching') {
+          if (phase === 'searching' || phase === 'tracking') {
             setDemoCountdown(demoPath.length - 1 - next);
           } else if (phase === 'trip_active') {
             setDemoCountdown(Math.ceil(((demoPath.length - 1 - next) / (demoPath.length - 1)) * 120));
