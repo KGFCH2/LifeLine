@@ -26,10 +26,8 @@ export default function FAQs() {
 
   return (
     <div className={`min-h-screen pb-24 transition-colors duration-500 ${isDark ? 'bg-[#0f172a]' : 'bg-gray-50'}`}>
-      <div className={`p-8 pb-16 rounded-b-[3rem] transition-all duration-500 shadow-2xl relative overflow-hidden ${
-        isDark 
-          ? 'bg-slate-900 border-b border-slate-800' 
-          : 'bg-gradient-to-br from-[#C8102E] to-[#A50D26] text-white'
+      <div className={`p-8 pb-16 rounded-b-[3rem] transition-all duration-500 shadow-2xl relative overflow-hidden bg-gradient-to-br from-[#C8102E] to-[#A50D26] text-white ${
+        isDark ? 'border-b border-white/10' : ''
       }`}>
         <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/2 blur-3xl pointer-events-none" />
         
