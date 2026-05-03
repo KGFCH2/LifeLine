@@ -1,9 +1,12 @@
 import { useState } from 'react'
 import { Mail, Phone, MapPin, Send, CheckCircle } from 'lucide-react'
+import { useTheme } from '../context/ThemeContext.jsx'
 
 export default function Contact() {
   const [form, setForm] = useState({ name: '', email: '', message: '' })
   const [sent, setSent] = useState(false)
+  const { theme } = useTheme()
+  const isDark = theme === 'dark'
 
   const handleSubmit = (e) => {
     e.preventDefault()
@@ -12,48 +15,50 @@ export default function Contact() {
   }
 
   return (
-    <div className="pb-24">
-      <div className="bg-gradient-to-br from-red-600 to-red-700 text-white p-5 pb-10 rounded-b-3xl">
-        <h1 className="text-2xl font-bold">Contact Us</h1>
-        <p className="text-red-100 text-sm mt-1">We are here 24/7 for emergencies and feedback</p>
+    <div className={`min-h-screen pb-24 transition-colors duration-300 ${isDark ? 'bg-[#0f172a]' : 'bg-gray-50'}`}>
+      <div className={`pt-20 pb-16 px-6 text-center ${isDark ? 'bg-slate-900 border-b border-slate-800' : 'bg-gradient-to-br from-[#C8102E] to-[#a50d26] text-white'} rounded-b-[3rem] shadow-xl`}>
+        <h1 className={`text-3xl font-black mb-2 ${isDark ? 'text-white' : 'text-white'}`}>Contact Us</h1>
+        <p className={`text-sm font-medium ${isDark ? 'text-slate-400' : 'text-red-100'}`}>We are here 24/7 for emergencies and feedback</p>
       </div>
-      <div className="px-4 -mt-6 grid grid-cols-1 gap-3">
-        <a href="tel:108" className="card flex items-center gap-3">
-          <div className="w-10 h-10 bg-red-50 dark:bg-red-900/20 rounded-xl flex items-center justify-center"><Phone size={18} className="text-red-600" /></div>
-          <div className="flex-1">
-            <p className="text-sm font-medium text-gray-900 dark:text-white">Emergency Helpline</p>
-            <p className="text-xs text-gray-500">108 / 112 - Toll Free</p>
-          </div>
-        </a>
-        <div className="card flex items-center gap-3">
-          <div className="w-10 h-10 bg-blue-50 dark:bg-blue-900/20 rounded-xl flex items-center justify-center"><Mail size={18} className="text-blue-600" /></div>
-          <div className="flex-1">
-            <p className="text-sm font-medium text-gray-900 dark:text-white">Email Support</p>
-            <p className="text-xs text-gray-500">support@lifeline.plus</p>
-          </div>
-        </div>
-        <div className="card flex items-center gap-3">
-          <div className="w-10 h-10 bg-green-50 dark:bg-green-900/20 rounded-xl flex items-center justify-center"><MapPin size={18} className="text-green-600" /></div>
-          <div className="flex-1">
-            <p className="text-sm font-medium text-gray-900 dark:text-white">HQ</p>
-            <p className="text-xs text-gray-500">Kolkata, West Bengal, India</p>
-          </div>
-        </div>
+
+      <div className="max-w-lg mx-auto px-4 -mt-8 grid grid-cols-1 gap-4">
+        {[
+          { href: "tel:108", icon: Phone, color: "text-red-600", bg: "bg-red-50", darkBg: "bg-red-900/10", title: "Emergency Helpline", desc: "108 / 112 - Toll Free" },
+          { icon: Mail, color: "text-blue-600", bg: "bg-blue-50", darkBg: "bg-blue-900/10", title: "Email Support", desc: "support@lifeline.plus" },
+          { icon: MapPin, color: "text-emerald-600", bg: "bg-emerald-50", darkBg: "bg-emerald-900/10", title: "Headquarters", desc: "Kolkata, West Bengal, India" }
+        ].map((item, idx) => {
+          const Icon = item.icon
+          const content = (
+            <div className={`p-5 rounded-2xl border flex items-center gap-4 transition-all ${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-gray-100 shadow-sm'}`}>
+              <div className={`w-12 h-12 ${isDark ? item.darkBg : item.bg} rounded-xl flex items-center justify-center shrink-0`}>
+                <Icon size={20} className={item.color} />
+              </div>
+              <div>
+                <p className={`text-sm font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>{item.title}</p>
+                <p className="text-xs text-gray-500 font-medium">{item.desc}</p>
+              </div>
+            </div>
+          )
+          return item.href ? <a key={idx} href={item.href}>{content}</a> : <div key={idx}>{content}</div>
+        })}
       </div>
-      <div className="px-4 mt-6">
-        <h2 className="font-bold text-gray-900 dark:text-white mb-3">Send a Message</h2>
+
+      <div className="max-w-lg mx-auto px-4 mt-10">
+        <h2 className={`font-black text-xl mb-6 ${isDark ? 'text-white' : 'text-gray-900'}`}>Send a Message</h2>
         {sent ? (
-          <div className="card text-center py-8">
-            <CheckCircle size={48} className="mx-auto text-green-500 mb-3" />
-            <h3 className="font-bold text-gray-900 dark:text-white">Message Sent!</h3>
-            <p className="text-sm text-gray-500 mt-1">We will get back to you shortly.</p>
+          <div className={`p-10 rounded-[2rem] border text-center transition-all ${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-gray-100 shadow-sm'}`}>
+            <div className="w-20 h-20 bg-emerald-500/10 text-emerald-500 rounded-full flex items-center justify-center mx-auto mb-6">
+              <CheckCircle size={40} />
+            </div>
+            <h3 className={`text-xl font-bold mb-2 ${isDark ? 'text-white' : 'text-gray-900'}`}>Message Sent!</h3>
+            <p className="text-sm text-gray-500 font-medium">We will get back to you shortly.</p>
           </div>
         ) : (
-          <form onSubmit={handleSubmit} className="card space-y-3">
-            <input className="input-field" placeholder="Your Name" value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} required />
-            <input className="input-field" placeholder="Email" type="email" value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))} required />
-            <textarea className="input-field min-h-[100px] resize-none" placeholder="Your message..." value={form.message} onChange={e => setForm(f => ({ ...f, message: e.target.value }))} required />
-            <button type="submit" className="btn-primary w-full flex items-center justify-center gap-2">
+          <form onSubmit={handleSubmit} className={`p-8 rounded-[2rem] border space-y-4 transition-all ${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-gray-100 shadow-sm'}`}>
+            <input className={`w-full px-5 py-4 rounded-xl border outline-none transition-all ${isDark ? 'bg-slate-800 border-slate-700 text-white focus:border-[#C8102E]' : 'bg-gray-50 border-gray-100 focus:border-[#C8102E]'}`} placeholder="Your Name" value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} required />
+            <input className={`w-full px-5 py-4 rounded-xl border outline-none transition-all ${isDark ? 'bg-slate-800 border-slate-700 text-white focus:border-[#C8102E]' : 'bg-gray-50 border-gray-100 focus:border-[#C8102E]'}`} placeholder="Email" type="email" value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))} required />
+            <textarea className={`w-full px-5 py-4 rounded-xl border outline-none transition-all min-h-[140px] resize-none ${isDark ? 'bg-slate-800 border-slate-700 text-white focus:border-[#C8102E]' : 'bg-gray-50 border-gray-100 focus:border-[#C8102E]'}`} placeholder="Your message..." value={form.message} onChange={e => setForm(f => ({ ...f, message: e.target.value }))} required />
+            <button type="submit" className="w-full bg-[#C8102E] hover:bg-[#a50d26] text-white font-black py-4 rounded-xl flex items-center justify-center gap-2 shadow-xl shadow-red-500/20 transition-all active:scale-95">
               <Send size={18} /> Send Message
             </button>
           </form>
