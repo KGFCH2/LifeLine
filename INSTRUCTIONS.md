@@ -189,6 +189,7 @@ LifeLine+ uses a premium, high-contrast design system to ensure clarity during e
 - **Minimalist Hover**: All interactive icons and cards use a subtle `scale-105` transformation. Rotations and heavy scaling are avoided to maintain a professional, restrained aesthetic.
 - **Tech Stack Reveal**: Tech stack icons in Documentation appear in grayscale and smoothly reveal their brand colors on hover.
 - **Mobile Grid**: Complex layouts (like tech stacks) use a **2-column grid** on mobile to maximize information density without clutter.
+- **Auto-Scroll to Status**: The platform automatically scrolls the content area to the top whenever a critical status change occurs (e.g., booking an ambulance or activating Civilian Mode), ensuring users never miss vital real-time updates.
 
 ---
 
