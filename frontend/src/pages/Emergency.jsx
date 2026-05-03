@@ -509,12 +509,19 @@ export default function Emergency() {
   // ─────────────────────────────────────────────────────────────────────────
   useEffect(() => {
     if (!on) return
-    const off1 = on('ambulance_assigned', data => { setRequestStatus({ ...data, status: 'accepted' }); setTracking(data.ambulance); setPhase('tracking') })
-    const off2 = on('ambulance_not_found', data => { setRequestStatus({ ...data, status: 'no_ambulance' }); setPhase('civilian_prompt') })
+    const off1 = on('ambulance_assigned', data => { 
+      setRequestStatus({ ...data, status: 'accepted' }); 
+      setTracking(data.ambulance); 
+      if (!demoMode) setPhase('tracking') 
+    })
+    const off2 = on('ambulance_not_found', data => { 
+      setRequestStatus({ ...data, status: 'no_ambulance' }); 
+      if (!demoMode) setPhase('civilian_prompt') 
+    })
     const off3 = on('location_update', data => { setTracking(prev => prev ? { ...prev, location: data.location } : null) })
     const off4 = on('ambulance_arrived', data => { setRequestStatus(prev => prev ? { ...prev, status: 'arrived', ...data } : prev) })
     return () => { off1(); off2(); off3(); off4() }
-  }, [on])
+  }, [on, demoMode])
 
   // ─────────────────────────────────────────────────────────────────────────
   // Fetch routes — uses stableGpsRef, not live location
@@ -1011,7 +1018,7 @@ export default function Emergency() {
                           <span className="text-sm font-black text-emerald-500">{Math.floor(demoCountdown / 60)}:{String(demoCountdown % 60).padStart(2, '0')}</span>
                         </div>
                         <div className={`w-full h-1.5 rounded-full overflow-hidden ${isDark ? 'bg-slate-800' : 'bg-emerald-100'}`}>
-                          <div className="h-full bg-emerald-500 transition-all duration-1000" style={{ width: `${(1 - demoCountdown / 60) * 100}%` }} />
+                          <div className="h-full bg-emerald-500 transition-all duration-1000" style={{ width: `${demoProgress * 100}%` }} />
                         </div>
                       </div>
                     )}
