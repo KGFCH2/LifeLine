@@ -17,6 +17,18 @@ export default function Profile() {
   const [editing, setEditing] = useState(false)
   const [form, setForm] = useState({ name: '', phone: '' })
   const [saved, setSaved] = useState(false)
+  const [stats, setStats] = useState({ level: 'Silver' })
+
+  useEffect(() => {
+    if (!user) return
+    const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000'
+    fetch(`${BACKEND_URL}/api/dashboard/stats?userId=${user.id || user.uid}`)
+      .then(res => res.json())
+      .then(data => {
+        if (data && data.level) setStats(data)
+      })
+      .catch(() => {})
+  }, [user])
 
   const handleLogout = () => {
     logout()
@@ -150,7 +162,7 @@ export default function Profile() {
           {[
             { label: 'PROVIDER', value: user.provider === 'google' ? 'Google' : 'Email', icon: User },
             { label: 'STATUS', value: 'Active', icon: Shield },
-            { label: 'LEVEL', value: 'Silver', icon: Bell },
+            { label: 'LEVEL', value: stats.level || 'Silver', icon: Bell },
           ].map((chip) => {
             const Icon = chip.icon
             return (
