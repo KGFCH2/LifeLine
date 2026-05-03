@@ -36,8 +36,9 @@ export const EmergencyProvider = ({ children }) => {
     try { return JSON.parse(saved); } catch { return []; }
   });
   const [demoProgress, setDemoProgress] = useState(() => Number(localStorage.getItem('ll_progress')) || 0);
-  const [demoCountdown, setDemoCountdown] = useState(() => Number(localStorage.getItem('ll_countdown')) || 60);
+  const [demoCountdown, setDemoCountdown] = useState(() => Number(localStorage.getItem('ll_countdown')) || 120);
   const [demoMode, setDemoMode] = useState(() => localStorage.getItem('ll_demo_mode') === 'true');
+  const [selectedHospitalIdx, setSelectedHospitalIdx] = useState(-1);
   const [showArrivalNotification, setShowArrivalNotification] = useState(false);
   const [arrivalType, setArrivalType] = useState('user'); // 'user' or 'hospital'
   const [stepCounter, setStepCounter] = useState(() => Number(localStorage.getItem('ll_step')) || 0);
@@ -71,27 +72,26 @@ export const EmergencyProvider = ({ children }) => {
       if (demoIntervalRef.current) clearInterval(demoIntervalRef.current);
       
       demoIntervalRef.current = setInterval(() => {
+        let currentStep = 0;
         setStepCounter(prev => {
-          const next = prev + 1;
-          if (next >= demoPath.length) {
-            clearInterval(demoIntervalRef.current);
-            handleArrival();
-            return prev;
-          }
-          
-          const pos = demoPath[next];
-          setDemoAmbulancePos(pos);
-          setDemoProgress(next / (demoPath.length - 1));
-          
-          if (phase === 'searching' || phase === 'tracking') {
-            setDemoCountdown(demoPath.length - 1 - next);
-          } else if (phase === 'trip_active') {
-            setDemoCountdown(Math.ceil(((demoPath.length - 1 - next) / (demoPath.length - 1)) * 120));
-          }
-          
-          return next;
+          currentStep = prev + 1;
+          return currentStep;
         });
-      }, phase === 'trip_active' ? 800 : 1000);
+
+        if (currentStep >= demoPath.length) {
+          clearInterval(demoIntervalRef.current);
+          handleArrival();
+          return;
+        }
+
+        const pos = demoPath[currentStep];
+        setDemoAmbulancePos(pos);
+        setDemoProgress(currentStep / (demoPath.length - 1));
+        
+        if (['searching', 'tracking', 'trip_active'].includes(phase)) {
+          setDemoCountdown(demoPath.length - 1 - currentStep);
+        }
+      }, 1000);
     } else {
       if (demoIntervalRef.current) clearInterval(demoIntervalRef.current);
     }
@@ -127,7 +127,7 @@ export const EmergencyProvider = ({ children }) => {
     setDemoPath(path);
     setDemoAmbulancePos(path[0]);
     setDemoProgress(0);
-    setDemoCountdown(path.length); // Assuming 1 step per second
+    setDemoCountdown(path.length - 1);
     setStepCounter(0);
     setDemoMode(true);
     setPhase('searching');
@@ -137,11 +137,13 @@ export const EmergencyProvider = ({ children }) => {
     setDemoPath(path);
     setDemoAmbulancePos(path[0]);
     setDemoProgress(0);
-    setDemoCountdown(120);
+    setDemoCountdown(path.length - 1);
     setStepCounter(0);
     setDemoMode(true);
     setPhase('trip_active');
   };
+
+  const isEmergencyActive = ['searching', 'tracking', 'arrived', 'trip_active', 'civilian_active', 'completed'].includes(phase);
 
   const resetEmergency = (isUserCancel = false) => {
     if (isUserCancel && ['searching', 'trip_active', 'arrived'].includes(phase)) {
@@ -157,9 +159,10 @@ export const EmergencyProvider = ({ children }) => {
     setDemoAmbulancePos(null);
     setDemoPath([]);
     setDemoProgress(0);
-    setDemoCountdown(60);
+    setDemoCountdown(120);
     setDemoMode(false);
     setStepCounter(0);
+    setSelectedHospitalIdx(-1);
     setShowArrivalNotification(false);
     
     // Clear localStorage
@@ -173,6 +176,7 @@ export const EmergencyProvider = ({ children }) => {
     localStorage.removeItem('ll_countdown');
     localStorage.removeItem('ll_demo_mode');
     localStorage.removeItem('ll_step');
+    localStorage.removeItem('ll_chat');
   };
 
   const value = {
@@ -185,10 +189,12 @@ export const EmergencyProvider = ({ children }) => {
     demoProgress, setDemoProgress,
     demoCountdown, setDemoCountdown,
     demoMode, setDemoMode,
+    selectedHospitalIdx, setSelectedHospitalIdx,
     chatMessages, setChatMessages,
     showArrivalNotification, setShowArrivalNotification,
     arrivalType, setArrivalType,
     resetEmergency,
+    isEmergencyActive,
     startLeg1Animation,
     startLeg2Animation,
     showCancelNotification, setShowCancelNotification,
