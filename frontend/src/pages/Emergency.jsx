@@ -637,22 +637,41 @@ export default function Emergency() {
       if (data.routes?.length) {
         const best = data.routes[0]
         setActiveRoute(best)
-        const path = best.steps.map(s => s.end_location)
-        startLeg2Animation(path)
+        const rawPath = best.steps.map(s => s.end_location)
+        startLeg2Animation(interpolatePath(rawPath, 100)) // Ensure 100 steps for trip
       } else {
         throw new Error('No routes found')
       }
     } catch (e) {
       console.warn('Trip leg 2 fetch failed, using mock path:', e)
-      const steps = 60
+      const steps = 100
       const path = Array.from({ length: steps + 1 }, (_, i) => ({
-        lat: userLocation.lat + (currentDest.lat - userLocation.lat) * (i / steps),
-        lng: userLocation.lng + (currentDest.lng - userLocation.lng) * (i / steps),
+        lat: origin.lat + (currentDest.lat - origin.lat) * (i / steps),
+        lng: origin.lng + (currentDest.lng - origin.lng) * (i / steps),
       }))
       startLeg2Animation(path)
     }
     setLoading(false)
   }
+
+  const interpolatePath = (path, minPoints) => {
+    if (path.length >= minPoints) return path;
+    const interpolated = [];
+    const factor = Math.ceil(minPoints / path.length);
+    for (let i = 0; i < path.length - 1; i++) {
+      const start = path[i];
+      const end = path[i + 1];
+      interpolated.push(start);
+      for (let j = 1; j < factor; j++) {
+        interpolated.push({
+          lat: start.lat + (end.lat - start.lat) * (j / factor),
+          lng: start.lng + (end.lng - start.lng) * (j / factor)
+        });
+      }
+    }
+    interpolated.push(path[path.length - 1]);
+    return interpolated;
+  };
 
   const startDemoAnimation = async (ambulanceLoc, userLoc) => {
     setUserAvatar({ position: userLoc, name: user?.name || 'You' })
@@ -662,21 +681,8 @@ export default function Emergency() {
       const data = await res.json()
       if (data.routes?.length) {
         const best = data.routes[0]
-        const path = best.steps.map(s => s.end_location)
-        // Ensure at least 60-80 steps for 1-2 minutes journey
-        let finalPath = path;
-        if (path.length < 80) {
-          // Sub-interpolate if the path is too short
-          finalPath = [];
-          for (let i = 0; i < path.length - 1; i++) {
-            const start = path[i];
-            const end = path[i+1];
-            finalPath.push(start);
-            finalPath.push({ lat: (start.lat + end.lat) / 2, lng: (start.lng + end.lng) / 2 });
-          }
-          finalPath.push(path[path.length - 1]);
-        }
-        startLeg1Animation(finalPath)
+        const rawPath = best.steps.map(s => s.end_location)
+        startLeg1Animation(interpolatePath(rawPath, 80)) // Ensure 80 steps for arrival
       } else {
         throw new Error('No route for Leg 1')
       }
@@ -814,7 +820,7 @@ export default function Emergency() {
       })
     })
   }
-  if (tracking?.location) mapMarkers.push({ position: tracking.location, title: 'Ambulance', type: 'ambulance' })
+  if (tracking?.location && !demoMode) mapMarkers.push({ position: tracking.location, title: 'Ambulance', type: 'ambulance' })
 
   const routePoly = activeRoute ? [activeRoute] : routes
 
@@ -983,10 +989,10 @@ export default function Emergency() {
             )}
 
             {/* ── PERSISTENT TRIP STATUS ─────────────────────────────────── */}
-            {['searching', 'arrived', 'trip_active', 'completed'].includes(phase) && (
+            {['searching', 'tracking', 'arrived', 'trip_active', 'civilian_active', 'completed'].includes(phase) && (
               <div className="mb-6 animate-in slide-in-from-top duration-500">
-                {/* Searching Phase */}
-                {phase === 'searching' && (
+                {/* Searching / Tracking Phase */}
+                {(phase === 'searching' || phase === 'tracking') && (
                   <div className={`p-6 text-center rounded-3xl border animate-pulse ${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-gray-100 shadow-lg'}`}>
                     <div className="relative w-20 h-20 mx-auto mb-4">
                       <div className="absolute inset-0 border-4 border-[#C8102E]/10 rounded-full" />
@@ -996,7 +1002,7 @@ export default function Emergency() {
                       </div>
                     </div>
                     <h2 className={`text-lg font-black ${isDark ? 'text-white' : 'text-gray-900'}`}>
-                      {demoMode ? 'Ambulance En Route' : 'Searching for Help...'}
+                      {phase === 'tracking' ? 'Live Tracking Active' : (demoMode ? 'Ambulance En Route' : 'Searching for Help...')}
                     </h2>
                     {demoMode && (
                       <div className={`mt-4 p-4 rounded-xl border ${isDark ? 'bg-emerald-900/10 border-emerald-500/20' : 'bg-emerald-50 border-emerald-100'}`}>
@@ -1235,7 +1241,7 @@ export default function Emergency() {
             )}
 
             {/* Nearby List + Actions */}
-            {activeServiceType !== 'ai' && nearbyHospitals.length > 0 && phase !== 'fetching_hospital' && (
+            {activeServiceType !== 'ai' && nearbyHospitals.length > 0 && !['searching', 'tracking', 'arrived', 'trip_active', 'civilian_active', 'completed'].includes(phase) && phase !== 'fetching_hospital' && (
               <div className="space-y-2">
                 <div className="flex items-center justify-between px-1">
                   <p className={`text-[10px] font-bold uppercase tracking-widest ${isDark ? 'text-slate-500' : 'text-gray-400'}`}>{activeServiceType}s Nearby</p>
