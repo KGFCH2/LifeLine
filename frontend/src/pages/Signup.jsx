@@ -62,9 +62,14 @@ export default function Signup() {
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target
+    
+    let finalValue = value
+    if (name === 'name') finalValue = value.replace(/[^a-zA-Z\s]/g, '')
+    if (name === 'phone') finalValue = value.replace(/[^0-9]/g, '')
+
     setFormData(prev => ({
       ...prev,
-      [name]: type === 'checkbox' ? checked : value
+      [name]: type === 'checkbox' ? checked : finalValue
     }))
     // Clear error for this field when user starts typing
     if (errors[name]) {
@@ -483,11 +488,11 @@ export default function Signup() {
                 />
                 <label htmlFor="agreeTerms" className="text-sm text-gray-600 dark:text-gray-400">
                   I agree to the{' '}
-                  <Link to="/terms-of-service" className="text-primary-600 dark:text-primary-400 hover:underline font-medium">
+                  <Link to="/terms" className="text-primary-600 dark:text-primary-400 hover:underline font-medium">
                     Terms of Service
                   </Link>{' '}
                   and{' '}
-                  <Link to="/privacy-policy" className="text-primary-600 dark:text-primary-400 hover:underline font-medium">
+                  <Link to="/privacy" className="text-primary-600 dark:text-primary-400 hover:underline font-medium">
                     Privacy Policy
                   </Link>
                 </label>
