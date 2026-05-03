@@ -167,10 +167,28 @@ LifeLine+ is a full-stack emergency response platform with these connected parts
 - Recent activity feed with status badges
 
 ### `frontend/src/pages/Profile.jsx`
-
 - User info display with edit form
 - Menu items for Emergency Contacts, Medical Records, Notifications, Privacy
 - Sign Out button
+
+---
+
+## 🎨 Design System & Branding
+
+LifeLine+ uses a premium, high-contrast design system to ensure clarity during emergencies.
+
+### 🔴 Core Branding (Red)
+- **Primary Color**: `#C8102E` (Medical Red)
+- **Legal Headers**: Privacy Policy, Terms of Service, and FAQs use a persistent red gradient (`#C8102E` to `#a50d26`) across all themes.
+- **Buttons**: Critical actions (SOS, Call, Book) use the brand red with subtle shadow glows.
+
+### 🟣 Documentation (Violet)
+- The Documentation page uses a unique **Violet-to-Indigo gradient** (`violet-600` to `indigo-800`) to visually distinguish technical guides from legal/emergency sections.
+
+### ✨ Interaction Standards
+- **Minimalist Hover**: All interactive icons and cards use a subtle `scale-105` transformation. Rotations and heavy scaling are avoided to maintain a professional, restrained aesthetic.
+- **Tech Stack Reveal**: Tech stack icons in Documentation appear in grayscale and smoothly reveal their brand colors on hover.
+- **Mobile Grid**: Complex layouts (like tech stacks) use a **2-column grid** on mobile to maximize information density without clutter.
 
 ---
 
