@@ -1,24 +1,52 @@
 import { useState } from 'react'
 import { Mail, Phone, MapPin, Send, CheckCircle } from 'lucide-react'
 import { useTheme } from '../context/ThemeContext.jsx'
+import { useAuth } from '../context/AuthContext.jsx'
 
 export default function Contact() {
-  const [form, setForm] = useState({ name: '', email: '', message: '' })
-  const [sent, setSent] = useState(false)
+  const { user } = useAuth()
   const { theme } = useTheme()
   const isDark = theme === 'dark'
+  const [form, setForm] = useState({ name: '', email: '', message: '' })
+  const [sent, setSent] = useState(false)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
-    setSent(true)
-    setTimeout(() => { setSent(false); setForm({ name: '', email: '', message: '' }) }, 3000)
+    setLoading(true)
+    setError('')
+
+    try {
+      const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000'
+      const accountName = user?.name || ''
+      const response = await fetch(`${backendUrl}/api/contact`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...form,
+          ...(accountName ? { accountName } : {})
+        })
+      })
+
+      const data = await response.json()
+      if (!response.ok) throw new Error(data.error || 'Failed to send message')
+
+      setSent(true)
+      setForm({ name: '', email: '', message: '' })
+      setTimeout(() => setSent(false), 3000)
+    } catch (err) {
+      setError(err.message || 'Failed to send message')
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
     <div className={`min-h-screen pb-24 transition-colors duration-300 ${isDark ? 'bg-[#0f172a]' : 'bg-gray-50'}`}>
-      <div className={`pt-20 pb-16 px-6 text-center ${isDark ? 'bg-slate-900 border-b border-slate-800' : 'bg-gradient-to-br from-[#C8102E] to-[#a50d26] text-white'} rounded-b-[3rem] shadow-xl`}>
-        <h1 className={`text-3xl font-black mb-2 ${isDark ? 'text-white' : 'text-white'}`}>Contact Us</h1>
-        <p className={`text-sm font-medium ${isDark ? 'text-slate-400' : 'text-red-100'}`}>We are here 24/7 for emergencies and feedback</p>
+      <div className={`pt-24 pb-16 px-6 text-center ${isDark ? 'bg-slate-900 border-b border-slate-800' : 'bg-gradient-to-br from-[#C8102E] to-[#a50d26] text-white'} rounded-b-[3rem] shadow-xl`}>
+        <h1 className="text-4xl font-black mb-3">Contact Us</h1>
+        <p className={`text-sm font-bold ${isDark ? 'text-slate-400' : 'text-red-100'}`}>We are here 24/7 for emergencies and feedback</p>
       </div>
 
       <div className="max-w-lg mx-auto px-4 -mt-8 grid grid-cols-1 gap-4">
@@ -34,8 +62,8 @@ export default function Contact() {
                 <Icon size={20} className={item.color} />
               </div>
               <div>
-                <p className={`text-sm font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>{item.title}</p>
-                <p className="text-xs text-gray-500 font-medium">{item.desc}</p>
+                <p className={`text-sm font-black ${isDark ? 'text-white' : 'text-gray-900'}`}>{item.title}</p>
+                <p className="text-xs text-gray-500 font-bold">{item.desc}</p>
               </div>
             </div>
           )
@@ -58,8 +86,9 @@ export default function Contact() {
             <input className={`w-full px-5 py-4 rounded-xl border outline-none transition-all ${isDark ? 'bg-slate-800 border-slate-700 text-white focus:border-[#C8102E]' : 'bg-gray-50 border-gray-100 focus:border-[#C8102E]'}`} placeholder="Your Name" value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} required />
             <input className={`w-full px-5 py-4 rounded-xl border outline-none transition-all ${isDark ? 'bg-slate-800 border-slate-700 text-white focus:border-[#C8102E]' : 'bg-gray-50 border-gray-100 focus:border-[#C8102E]'}`} placeholder="Email" type="email" value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))} required />
             <textarea className={`w-full px-5 py-4 rounded-xl border outline-none transition-all min-h-[140px] resize-none ${isDark ? 'bg-slate-800 border-slate-700 text-white focus:border-[#C8102E]' : 'bg-gray-50 border-gray-100 focus:border-[#C8102E]'}`} placeholder="Your message..." value={form.message} onChange={e => setForm(f => ({ ...f, message: e.target.value }))} required />
-            <button type="submit" className="w-full bg-[#C8102E] hover:bg-[#a50d26] text-white font-black py-4 rounded-xl flex items-center justify-center gap-2 shadow-xl shadow-red-500/20 transition-all active:scale-95">
-              <Send size={18} /> Send Message
+            {error && <p className="text-xs text-red-500 font-bold">{error}</p>}
+            <button type="submit" disabled={loading} className="w-full bg-[#C8102E] hover:bg-[#a50d26] disabled:opacity-50 text-white font-black py-4 rounded-xl flex items-center justify-center gap-2 shadow-xl shadow-red-500/20 transition-all">
+              <Send size={18} /> {loading ? 'Sending...' : 'Send Message'}
             </button>
           </form>
         )}

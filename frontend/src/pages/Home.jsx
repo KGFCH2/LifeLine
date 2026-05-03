@@ -20,205 +20,173 @@ const TOP_DOCTORS = [
 ]
 
 export default function Home() {
-  const { user } = useAuth()
   const navigate = useNavigate()
+  const { user } = useAuth()
   const { theme } = useTheme()
   const isDark = theme === 'dark'
-  const { location: geoLocation, loading: geoLoading } = useGeolocation()
+  const { location } = useGeolocation()
   const [showLogin, setShowLogin] = useState(false)
   const [form, setForm] = useState({ name: '', email: '', message: '' })
   const [sent, setSent] = useState(false)
+  const [contactLoading, setContactLoading] = useState(false)
+  const [contactError, setContactError] = useState('')
 
   const handleEmergency = () => {
     if (!user) setShowLogin(true)
     else navigate('/emergency')
   }
 
-  const handleContactSubmit = (e) => {
+  const handleContactSubmit = async (e) => {
     e.preventDefault()
-    setSent(true)
-    setTimeout(() => {
-      setSent(false)
+    setContactLoading(true)
+    setContactError('')
+
+    try {
+      const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000'
+      const accountName = user?.name || user?.displayName || ''
+      const response = await fetch(`${backendUrl}/api/contact`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...form,
+          ...(accountName ? { accountName } : {})
+        })
+      })
+
+      const data = await response.json()
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to send message')
+      }
+
+      setSent(true)
       setForm({ name: '', email: '', message: '' })
-    }, 3000)
+      setTimeout(() => { setSent(false) }, 3000)
+    } catch (err) {
+      setContactError(err.message || 'Failed to send message')
+    } finally {
+      setContactLoading(false)
+    }
   }
 
-  const features = [
-    { icon: MapPin, title: 'Smart Discovery', desc: 'Instant GPS-based discovery of hospitals, ambulances, and emergency services near you.', iconColor: 'text-[#C8102E]', bg: 'bg-red-50', darkBg: 'bg-red-900/10' },
-    { icon: Navigation, title: 'Live Tracking', desc: 'Real-time ambulance tracking with traffic-aware routing and ETA via Socket.io.', iconColor: 'text-blue-600', bg: 'bg-blue-50', darkBg: 'bg-blue-900/10' },
-    { icon: Brain, title: 'AI Verification', desc: 'Gemini AI validates civilian emergency requests instantly — vehicle, purpose, contact.', iconColor: 'text-violet-600', bg: 'bg-violet-50', darkBg: 'bg-violet-900/10' },
-    { icon: Stethoscope, title: 'Doctor Booking', desc: 'Discover nearby doctors, filter by specialty, check available slots and confirm.', iconColor: 'text-emerald-600', bg: 'bg-emerald-50', darkBg: 'bg-emerald-900/10' },
-    { icon: Shield, title: 'Police Coordination', desc: 'Auto-detect police stations along route and broadcast live alerts instantly.', iconColor: 'text-blue-600', bg: 'bg-blue-50', darkBg: 'bg-blue-900/10' },
-    { icon: Zap, title: 'Instant Response', desc: 'A 5-minute acceptance window with automatic fallback — you are never alone.', iconColor: 'text-amber-600', bg: 'bg-amber-50', darkBg: 'bg-amber-900/10' },
-  ]
-
-  const steps = [
-    { num: '01', title: 'Request Help', desc: 'Tap "Book Emergency", allow location, and we find the nearest available ambulance.', icon: Ambulance },
-    { num: '02', title: 'Live Tracking', desc: 'Watch your ambulance move on the map with real-time ETA and alternate route suggestions.', icon: Activity },
-    { num: '03', title: 'Help Arrives', desc: 'Police alerted along route. Nearest hospital pre-selected. Every second is optimized.', icon: Heart },
-  ]
-
-  const helplines = [
-    { label: 'Ambulance', number: '108', iconBg: 'bg-[#C8102E]', cardBg: 'bg-red-50', darkCardBg: 'bg-red-900/10', border: 'border-red-100', darkBorder: 'border-red-900/20' },
-    { label: 'Emergency', number: '112', iconBg: 'bg-orange-500', cardBg: 'bg-orange-50', darkCardBg: 'bg-orange-900/10', border: 'border-orange-100', darkBorder: 'border-orange-900/20' },
-    { label: 'Police', number: '100', iconBg: 'bg-blue-600', cardBg: 'bg-blue-50', darkCardBg: 'bg-blue-900/10', border: 'border-blue-100', darkBorder: 'border-blue-900/20' },
-    { label: 'Fire', number: '101', iconBg: 'bg-amber-500', cardBg: 'bg-amber-50', darkCardBg: 'bg-amber-900/10', border: 'border-amber-100', darkBorder: 'border-amber-900/20' },
-  ]
-
   return (
-    <div className={`overflow-x-hidden transition-colors duration-300 ${isDark ? 'bg-[#0f172a]' : 'bg-white'}`}>
+    <div className={`min-h-screen transition-colors duration-300 ${isDark ? 'bg-[#0f172a]' : 'bg-white'}`}>
+      <HeroSlider onEmergency={handleEmergency} />
 
-      {/* ─── HERO ──────────────────────────────────────────────────────────── */}
-      <HeroSlider handleEmergency={handleEmergency} />
-
-      {/* ─── FEATURES ─────────────────────────────────────────────────────── */}
-      <section id="features" className={`py-24 px-4 transition-colors ${isDark ? 'bg-slate-900/50' : 'bg-gray-50'}`}>
-        <div className="max-w-6xl mx-auto">
-          <div className="flex flex-col items-center text-center mb-16">
-            <span className="text-xs font-bold uppercase tracking-[0.2em] text-[#C8102E] mb-4">FEATURES</span>
-            <h2 className={`text-4xl sm:text-5xl font-black mb-6 tracking-tight ${isDark ? 'text-white' : 'text-gray-900'}`}>Everything you need in a crisis</h2>
-            <p className={`max-w-xl text-lg ${isDark ? 'text-slate-400' : 'text-gray-500'}`}>
-              LifeLine+ combines real-time data, AI, and live coordination so you always get the fastest possible help.
-            </p>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {features.map((f) => {
-              const Icon = f.icon
-              return (
-                <div key={f.title} className={`rounded-3xl p-8 border transition-all duration-300 group ${
-                  isDark ? 'bg-slate-900 border-slate-800 hover:border-[#C8102E]/30 shadow-xl' : 'bg-white border-gray-100 shadow-sm hover:shadow-md hover:-translate-y-1'
-                }`}>
-                  <div className={`w-14 h-14 ${isDark ? f.darkBg : f.bg} rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300`}>
-                    <Icon size={24} className={f.iconColor} />
-                  </div>
-                  <h3 className={`font-bold text-xl mb-3 ${isDark ? 'text-white' : 'text-gray-900'}`}>{f.title}</h3>
-                  <p className={`text-base leading-relaxed ${isDark ? 'text-slate-400' : 'text-gray-500'}`}>{f.desc}</p>
-                </div>
-              )
-            })}
-          </div>
+      {/* ─── QUICK STATS ─────────────────────────────────────────────────── */}
+      <section className={`py-12 border-b ${isDark ? 'bg-slate-950/50 border-slate-800' : 'bg-gray-50 border-gray-100'}`}>
+        <div className="max-w-7xl mx-auto px-4 grid grid-cols-2 lg:grid-cols-4 gap-8">
+          {[
+            { label: 'Avg Response', value: '4.8 min', icon: Clock, color: 'text-red-500' },
+            { label: 'Active Fleet', value: '1,240+', icon: Ambulance, color: 'text-blue-500' },
+            { label: 'Partner Hospitals', value: '450+', icon: Building2, color: 'text-emerald-500' },
+            { label: 'Lives Saved', value: '85k+', icon: Activity, color: 'text-[#C8102E]' },
+          ].map((stat) => (
+            <div key={stat.label} className="flex items-center gap-4">
+              <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${isDark ? 'bg-slate-900 shadow-xl' : 'bg-white shadow-sm'}`}>
+                <stat.icon size={22} className={stat.color} />
+              </div>
+              <div>
+                <p className={`text-2xl font-black tracking-tight ${isDark ? 'text-white' : 'text-gray-900'}`}>{stat.value}</p>
+                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{stat.label}</p>
+              </div>
+            </div>
+          ))}
         </div>
       </section>
 
-      {/* ─── HOW IT WORKS ─────────────────────────────────────────────────── */}
-      <section className={`py-24 px-4 transition-colors ${isDark ? 'bg-[#0f172a]' : 'bg-white'}`}>
-        <div className="max-w-5xl mx-auto">
-          <div className="flex flex-col items-center text-center mb-16">
-            <span className="text-xs font-bold uppercase tracking-widest text-[#C8102E] mb-3">HOW IT WORKS</span>
-            <h2 className={`text-3xl sm:text-4xl font-extrabold mb-4 ${isDark ? 'text-white' : 'text-gray-900'}`}>Help in 3 simple steps</h2>
-            <p className={`max-w-md text-base ${isDark ? 'text-slate-400' : 'text-gray-500'}`}>
-              From tap to arrival — we handle everything so you can focus on what matters most.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-12 relative">
-            <div className={`hidden md:block absolute top-14 left-[18%] right-[18%] h-px border-t border-dashed ${isDark ? 'border-slate-700' : 'border-gray-200'}`} />
-            {steps.map((step, i) => {
-              const Icon = step.icon
-              return (
-                <div key={step.num} className="flex flex-col items-center text-center group">
-                  <div className="relative mb-8">
-                    <div className={`w-28 h-28 rounded-[2rem] flex items-center justify-center transition-all duration-500 group-hover:rotate-[10deg] ${isDark ? 'bg-slate-900 border border-slate-800 shadow-xl' : 'bg-white border border-gray-100 shadow-sm'}`}>
-                      <div className="w-16 h-16 bg-[#C8102E] rounded-2xl flex items-center justify-center shadow-xl shadow-[#C8102E]/30 transition-transform group-hover:scale-110">
-                        <Icon size={30} className="text-white" />
-                      </div>
-                    </div>
-                    <div className="absolute -top-3 -right-3 w-10 h-10 bg-[#C8102E] text-white rounded-full flex items-center justify-center shadow-lg border-4 border-white dark:border-[#0f172a]">
-                      <span className="text-xs font-black">{step.num}</span>
-                    </div>
-                  </div>
-                  <h3 className={`font-bold mb-3 text-xl ${isDark ? 'text-white' : 'text-gray-900'}`}>{step.title}</h3>
-                  <p className={`text-base leading-relaxed max-w-[220px] ${isDark ? 'text-slate-400' : 'text-gray-500'}`}>{step.desc}</p>
-                </div>
-              )
-            })}
-          </div>
-
-          <div className="mt-20 text-center">
-            <button
-              onClick={handleEmergency}
-              className="inline-flex items-center gap-3 bg-[#C8102E] hover:bg-[#a50d26] text-white font-black px-10 py-5 rounded-2xl shadow-2xl shadow-red-500/30 transition-all duration-300 hover:scale-105 active:scale-95 text-lg"
-            >
-              <Ambulance size={22} />
-              Try It Now
-              <ArrowRight size={20} />
-            </button>
-          </div>
-        </div>
-      </section>
-
-      {/* ─── TOP DOCTORS ─────────────────────────────────────────────────── */}
-      <section className={`py-24 px-4 transition-colors ${isDark ? 'bg-slate-900/50' : 'bg-gray-50'}`}>
-        <div className="max-w-6xl mx-auto">
-          <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-16">
-            <div className="max-w-2xl text-center md:text-left">
-              <span className="text-xs font-bold uppercase tracking-[0.2em] text-[#C8102E] mb-4 block">TOP DOCTORS</span>
-              <h2 className={`text-4xl sm:text-5xl font-black mb-4 tracking-tight ${isDark ? 'text-white' : 'text-gray-900'}`}>Trusted specialists, nearby</h2>
-              <p className={`text-lg ${isDark ? 'text-slate-400' : 'text-gray-500'}`}>
-                Book an appointment with a verified specialist in minutes.
-              </p>
+      {/* ─── SERVICES ────────────────────────────────────────────────────── */}
+      <section id="features" className="py-24 px-4 overflow-hidden relative">
+        <div className="max-w-7xl mx-auto">
+          <div className="flex flex-col md:flex-row md:items-end justify-between mb-16 gap-6">
+            <div className="max-w-2xl">
+              <span className="text-xs font-bold uppercase tracking-[0.2em] text-[#C8102E] mb-4 block">OUR ECOSYSTEM</span>
+              <h2 className={`text-4xl sm:text-5xl font-black tracking-tight ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                Advanced Emergency <br /> Response Infrastructure
+              </h2>
             </div>
             <button 
               onClick={() => navigate('/doctors')}
-              className={`flex items-center gap-2 px-6 py-3 rounded-full font-bold transition-all mx-auto md:mx-0 ${
-                isDark ? 'bg-slate-800 text-white hover:bg-slate-700' : 'bg-white text-gray-900 border border-gray-100 hover:bg-gray-50 shadow-sm'
-              }`}
+              className="flex items-center gap-2 text-xs font-black uppercase tracking-widest text-[#C8102E] hover:gap-4 transition-all"
             >
-              View all doctors <ArrowRight size={18} />
+              Explore Services <ChevronRight size={16} />
             </button>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {[
+              { 
+                title: 'AI Ambulance Dispatch', 
+                desc: 'Smart routing and predictive allocation ensure the nearest ambulance reaches you in record time.',
+                icon: Navigation,
+                color: 'bg-blue-500'
+              },
+              { 
+                title: 'Civilian Mode', 
+                desc: 'When every second counts and no ambulance is near, Gemini AI authorizes personal vehicles for emergency transit.',
+                icon: Brain,
+                color: 'bg-amber-500'
+              },
+              { 
+                title: 'Doctor Appointments', 
+                desc: 'Instantly connect with top specialists and hospitals for priority care and follow-ups.',
+                icon: Stethoscope,
+                color: 'bg-[#C8102E]'
+              }
+            ].map((s, idx) => (
+              <div 
+                key={idx} 
+                className={`p-10 rounded-[2.5rem] border transition-all duration-500 hover:-translate-y-2 group ${
+                  isDark ? 'bg-slate-900 border-slate-800 hover:border-[#C8102E]/40' : 'bg-white border-gray-100 shadow-xl shadow-gray-200/40'
+                }`}
+              >
+                <div className={`w-14 h-14 rounded-2xl ${s.color} flex items-center justify-center text-white shadow-2xl shadow-inherit mb-8 group-hover:scale-110 transition-transform`}>
+                  <s.icon size={28} />
+                </div>
+                <h3 className={`text-2xl font-black mb-4 ${isDark ? 'text-white' : 'text-gray-900'}`}>{s.title}</h3>
+                <p className={`text-base leading-relaxed font-medium mb-6 ${isDark ? 'text-slate-400' : 'text-gray-500'}`}>{s.desc}</p>
+                <div className={`w-10 h-1 bg-gray-100 dark:bg-slate-800 rounded-full group-hover:w-20 group-hover:bg-[#C8102E] transition-all`} />
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ─── DOCTORS PREVIEW ─────────────────────────────────────────────── */}
+      <section className={`py-24 px-4 transition-colors ${isDark ? 'bg-slate-950/50' : 'bg-gray-50'}`}>
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center mb-16">
+            <h2 className={`text-3xl sm:text-4xl font-black mb-4 ${isDark ? 'text-white' : 'text-gray-900'}`}>Top Specialists Nearby</h2>
+            <p className={`text-sm font-bold ${isDark ? 'text-slate-400' : 'text-gray-500'}`}>Book instant consultations with verified medical experts</p>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {TOP_DOCTORS.map((doc) => (
-              <div 
-                key={doc.id}
-                className={`group rounded-[2rem] p-6 border transition-all duration-500 ${
-                  isDark 
-                    ? 'bg-slate-900 border-slate-800 hover:border-[#C8102E]/30 shadow-2xl' 
-                    : 'bg-white border-gray-100 shadow-sm hover:shadow-xl hover:-translate-y-2'
-                }`}
-              >
-                <div className="flex items-start justify-between mb-6">
-                  <div className={`w-14 h-14 rounded-2xl flex items-center justify-center text-xl font-black ${
-                    isDark ? 'bg-slate-800 text-white border border-slate-700' : 'bg-red-50 text-[#C8102E]'
-                  }`}>
+              <div key={doc.id} className={`rounded-[2rem] border p-6 transition-all group ${
+                isDark ? 'bg-slate-900 border-slate-800 hover:border-slate-700' : 'bg-white border-gray-100 hover:shadow-xl'
+              }`}>
+                <div className="flex items-center gap-4 mb-6">
+                  <div className="w-14 h-14 bg-[#C8102E] rounded-2xl flex items-center justify-center text-xl font-black text-white shadow-lg shadow-red-500/20">
                     {doc.initial}
                   </div>
-                  <div className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider flex items-center gap-1.5 ${
-                    doc.available 
-                      ? (isDark ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-emerald-50 text-emerald-600')
-                      : (isDark ? 'bg-slate-800 text-slate-500' : 'bg-gray-100 text-gray-400')
-                  }`}>
-                    <div className={`w-1.5 h-1.5 rounded-full ${doc.available ? 'bg-emerald-500' : 'bg-gray-400'}`} />
-                    {doc.available ? 'Available Today' : 'Unavailable'}
+                  <div>
+                    <h4 className={`font-black text-base truncate ${isDark ? 'text-white' : 'text-gray-900'}`}>{doc.name}</h4>
+                    <p className="text-[11px] font-bold text-[#C8102E] uppercase tracking-wider">{doc.specialty}</p>
                   </div>
                 </div>
-
-                <div className="mb-6">
-                  <h3 className={`font-black text-lg leading-tight mb-1 ${isDark ? 'text-white' : 'text-gray-900'}`}>{doc.name}</h3>
-                  <p className="text-sm font-bold text-[#C8102E] mb-3">{doc.specialty}</p>
-                  
-                  <div className={`space-y-1.5 text-xs font-medium ${isDark ? 'text-slate-400' : 'text-gray-500'}`}>
-                    <p className="flex items-center gap-2">
-                      <Building2 size={12} className="shrink-0" /> {doc.hospital} · {doc.experience}
-                    </p>
-                    <div className="flex items-center justify-between mt-4 pt-4 border-t border-gray-100/10">
-                      <div className="flex items-center gap-1 text-amber-500 font-bold">
-                        <Star size={14} fill="currentColor" /> {doc.rating}
-                      </div>
-                      <div className={`font-black ${isDark ? 'text-white' : 'text-gray-900'}`}>
-                        {doc.fee}
-                      </div>
-                    </div>
+                <div className="space-y-3 mb-6">
+                  <div className="flex items-center justify-between text-xs font-bold">
+                    <span className="text-gray-400">Hospital</span>
+                    <span className={isDark ? 'text-slate-300' : 'text-gray-700'}>{doc.hospital}</span>
+                  </div>
+                  <div className="flex items-center justify-between text-xs font-bold">
+                    <span className="text-gray-400">Rating</span>
+                    <span className="text-amber-500 flex items-center gap-1"><Star size={12} fill="currentColor" /> {doc.rating}</span>
                   </div>
                 </div>
-
                 <button 
                   onClick={() => navigate('/doctors')}
-                  className={`w-full py-4 rounded-xl font-bold text-sm transition-all active:scale-95 ${
-                    isDark 
-                      ? 'bg-slate-800 text-white hover:bg-[#C8102E] hover:shadow-[0_10px_20px_rgba(200,16,46,0.2)]' 
-                      : 'bg-gray-50 text-gray-900 hover:bg-gray-900 hover:text-white shadow-sm'
+                  className={`w-full py-3.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${
+                    isDark ? 'bg-slate-800 text-white hover:bg-slate-700' : 'bg-gray-50 text-gray-900 hover:bg-[#C8102E] hover:text-white'
                   }`}
                 >
                   Book Appointment
@@ -229,63 +197,40 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ─── EMERGENCY HELPLINES ──────────────────────────────────────────── */}
-      <section className={`py-16 px-4 transition-colors border-y ${isDark ? 'bg-[#0f172a] border-slate-800' : 'bg-white border-gray-100'}`}>
-        <div className="max-w-4xl mx-auto">
-          <div className="flex flex-col items-center text-center mb-10">
-            <div className="w-12 h-12 bg-[#C8102E] rounded-2xl flex items-center justify-center mb-4 shadow-md shadow-[#C8102E]/20">
-              <Phone size={22} className="text-white" />
-            </div>
-            <h2 className={`text-2xl sm:text-3xl font-extrabold mb-2 ${isDark ? 'text-white' : 'text-gray-900'}`}>India Emergency Helplines</h2>
-            <p className="text-xs text-gray-400 font-medium">Tap to call — always free, always available</p>
+      {/* ─── ABOUT / MISSION ────────────────────────────────────────────── */}
+      <section className="py-24 px-4">
+        <div className="max-w-4xl mx-auto text-center">
+          <div className="w-20 h-20 bg-red-50 dark:bg-red-500/10 rounded-[2rem] flex items-center justify-center mx-auto mb-10 text-[#C8102E]">
+            <Heart size={40} fill="currentColor" />
           </div>
-
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 max-w-3xl mx-auto">
-            {helplines.map((h) => (
-              <a
-                key={h.number}
-                href={`tel:${h.number}`}
-                className={`border rounded-2xl p-4 flex flex-col items-center gap-2 hover:shadow-md hover:-translate-y-1 transition-all duration-200 group ${
-                  isDark ? `${h.darkCardBg} ${h.darkBorder}` : `${h.cardBg} ${h.border}`
-                }`}
-              >
-                <div className={`w-10 h-10 ${h.iconBg} rounded-xl flex items-center justify-center shadow-sm`}>
-                  <Phone size={17} className="text-white" />
-                </div>
-                <div className="text-center">
-                  <p className={`text-2xl font-black ${isDark ? 'text-white' : 'text-gray-900'}`}>{h.number}</p>
-                  <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">{h.label}</p>
-                </div>
-              </a>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ─── TEAM ─────────────────────────────────────────────────────────── */}
-      <section className={`py-24 px-4 transition-colors ${isDark ? 'bg-slate-900/50' : 'bg-gray-50'}`}>
-        <div className="max-w-5xl mx-auto">
-          <div className="flex flex-col items-center text-center mb-16">
-            <span className="text-xs font-bold uppercase tracking-[0.2em] text-[#C8102E] mb-4">THE TEAM</span>
-            <h2 className={`text-4xl sm:text-5xl font-black mb-6 tracking-tight ${isDark ? 'text-white' : 'text-gray-900'}`}>Built with purpose</h2>
-            <p className={`max-w-xl text-lg ${isDark ? 'text-slate-400' : 'text-gray-500'}`}>
-              We are the <strong>LifeLine+</strong> team — dedicated to rapid emergency response across India.
-            </p>
-          </div>
-
+          <h2 className={`text-4xl sm:text-6xl font-black mb-8 tracking-tighter ${isDark ? 'text-white' : 'text-gray-900'}`}>
+            Saving lives is in <br /> our DNA.
+          </h2>
+          <p className={`text-xl leading-relaxed font-medium mb-12 ${isDark ? 'text-slate-400' : 'text-gray-600'}`}>
+            LifeLine+ isn't just an app. It's a digital shield for millions of families in India. 
+            By merging AI with real-world emergency fleets, we are cutting response times 
+            down to the absolute minimum.
+          </p>
+          
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-6">
             {[
-              { name: 'Babin Bid', role: 'Team Lead & Architecture', initials: 'BB' },
-              { name: 'Atanu Saha', role: 'Frontend Developer', initials: 'AS' },
-              { name: 'Rohit Kumar Adak', role: 'Idea & Backend Dev', initials: 'RK' },
-              { name: 'Sagnik Bachhar', role: 'Research & Developer', initials: 'SB' },
+              { name: 'Babin Bid', role: 'Team Lead & Full Stack Developer', initials: 'BB', portfolio: null },
+              { name: 'Atanu Saha', role: 'Frontend Developer & Tester', initials: 'AS', portfolio: null },
+              { name: 'Rohit Kumar Adak', role: 'Idea, Architect & Backend Dev', initials: 'RK', portfolio: 'https://rohitadak.dev'},
+              { name: 'Sagnik Bachhar', role: 'Researcher', initials: 'SB', portfolio: null },
             ].map((m) => (
               <div key={m.name} className={`flex flex-col items-center text-center p-6 rounded-[2rem] border transition-all duration-300 group ${
                 isDark ? 'bg-slate-900 border-slate-800 hover:border-[#C8102E]/30 shadow-xl' : 'bg-white border-gray-100 hover:border-[#C8102E]/20 hover:shadow-lg'
               }`}>
-                <div className="w-16 h-16 rounded-2xl bg-[#C8102E] flex items-center justify-center text-white font-black text-xl mb-4 shadow-xl shadow-[#C8102E]/20 group-hover:scale-110 transition-transform">
-                  {m.initials}
-                </div>
+                {m.portfolio ? (
+                  <a href={m.portfolio} target="_blank" rel="noopener noreferrer" className="w-16 h-16 rounded-2xl bg-[#C8102E] flex items-center justify-center text-white font-black text-xl mb-4 shadow-xl shadow-[#C8102E]/20 group-hover:scale-110 transition-transform">
+                    {m.initials}
+                  </a>
+                ) : (
+                  <div className="w-16 h-16 rounded-2xl bg-[#C8102E] flex items-center justify-center text-white font-black text-xl mb-4 shadow-xl shadow-[#C8102E]/20 group-hover:scale-110 transition-transform">
+                    {m.initials}
+                  </div>
+                )}
                 <p className={`text-base font-bold leading-tight ${isDark ? 'text-white' : 'text-gray-900'}`}>{m.name}</p>
                 <p className="text-xs text-gray-400 mt-2 font-medium leading-tight">{m.role}</p>
               </div>
@@ -346,9 +291,10 @@ export default function Home() {
                   <input className={`w-full px-5 py-4 rounded-xl border outline-none transition-all ${isDark ? 'bg-slate-800 border-slate-700 text-white focus:border-[#C8102E]' : 'bg-white border-gray-200 focus:border-[#C8102E]'}`} placeholder="Your Name" value={form.name} onChange={(e) => setForm(f => ({ ...f, name: e.target.value }))} required />
                   <input className={`w-full px-5 py-4 rounded-xl border outline-none transition-all ${isDark ? 'bg-slate-800 border-slate-700 text-white focus:border-[#C8102E]' : 'bg-white border-gray-200 focus:border-[#C8102E]'}`} type="email" placeholder="Email Address" value={form.email} onChange={(e) => setForm(f => ({ ...f, email: e.target.value }))} required />
                   <textarea className={`w-full px-5 py-4 rounded-xl border outline-none transition-all min-h-[120px] resize-none ${isDark ? 'bg-slate-800 border-slate-700 text-white focus:border-[#C8102E]' : 'bg-white border-gray-200 focus:border-[#C8102E]'}`} placeholder="Your message..." value={form.message} onChange={(e) => setForm(f => ({ ...f, message: e.target.value }))} required />
-                  <button type="submit" className="w-full bg-[#C8102E] hover:bg-[#a50d26] text-white font-black py-4 rounded-xl flex items-center justify-center gap-2 shadow-xl shadow-red-500/20 transition-all active:scale-95 mt-4">
+                  {contactError && <p className="text-xs text-red-500 font-bold">{contactError}</p>}
+                  <button type="submit" disabled={contactLoading} className="w-full bg-[#C8102E] hover:bg-[#a50d26] text-white font-black py-4 rounded-xl flex items-center justify-center gap-2 shadow-xl shadow-red-500/20 transition-all mt-4 disabled:opacity-50">
                     <Send size={18} />
-                    Send Message
+                    {contactLoading ? 'Sending...' : 'Send Message'}
                   </button>
                 </form>
               )}
