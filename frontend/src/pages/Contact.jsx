@@ -2,10 +2,12 @@ import { useState } from 'react'
 import { Mail, Phone, MapPin, Send, CheckCircle } from 'lucide-react'
 import { useTheme } from '../context/ThemeContext.jsx'
 import { useAuth } from '../context/AuthContext.jsx'
+import { useEmergency } from '../context/EmergencyContext.jsx'
 
 export default function Contact() {
   const { user } = useAuth()
   const { theme } = useTheme()
+  const { logActivity } = useEmergency()
   const isDark = theme === 'dark'
   const [form, setForm] = useState({ name: '', email: '', message: '' })
   const [sent, setSent] = useState(false)
@@ -33,6 +35,7 @@ export default function Contact() {
       if (!response.ok) throw new Error(data.error || 'Failed to send message')
 
       setSent(true)
+      logActivity(user?.id, 'booking', 'Support message sent', 'completed')
       setForm({ name: '', email: '', message: '' })
       setTimeout(() => setSent(false), 3000)
     } catch (err) {
