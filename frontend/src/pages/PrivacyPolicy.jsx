@@ -64,12 +64,12 @@ export default function PrivacyPolicy() {
 
   return (
     <div className={`pb-24 transition-colors duration-300 ${isDark ? 'bg-[#0f172a]' : 'bg-gray-50'}`}>
-      <div className={`p-10 pb-16 rounded-b-[3rem] shadow-xl ${isDark ? 'bg-slate-900 border-b border-slate-800' : 'bg-gradient-to-br from-[#C8102E] to-[#a50d26] text-white'}`}>
+      <div className={`p-10 pb-16 rounded-b-[3rem] shadow-xl bg-gradient-to-br from-[#C8102E] to-[#a50d26] text-white ${isDark ? 'border-b border-white/10' : ''}`}>
         <div className="max-w-4xl mx-auto">
-          <h1 className={`text-4xl font-black flex items-center gap-3 ${isDark ? 'text-white' : 'text-white'}`}>
+          <h1 className="text-4xl font-black flex items-center gap-3 text-white">
             <Shield size={36} className="animate-pulse" /> Privacy Policy
           </h1>
-          <p className={`text-lg mt-2 ${isDark ? 'text-slate-400' : 'text-red-100'}`}>How we handle your data with care</p>
+          <p className="text-lg mt-2 text-red-100">How we handle your data with care</p>
         </div>
       </div>
 
