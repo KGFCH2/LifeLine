@@ -192,6 +192,23 @@ LifeLine+ uses a premium, high-contrast design system to ensure clarity during e
 
 ---
 
+## 🚀 Demo Simulation & "Wow" Factors
+
+LifeLine+ is optimized for live demonstrations. The following "Demo Mode" behaviors are enabled by default to ensure a high-impact presentation:
+
+### ⏱️ Accelerated Time-Warping
+- **Ambulance Acceptance**: In production, drivers have several minutes to accept. In **Demo Mode**, the backend simulates a nearby driver acceptance in exactly **5 seconds**, allowing for an immediate transition to the live tracking view.
+- **AI Verification**: Gemini AI verifications for Civilian Mode are optimized for <3s response times, providing near-instant approval/denial based on the user's input.
+- **Real-time Map Movement**: The ambulance marker on the map uses a smooth animation library to simulate actual driving speeds, making the "live tracking" feel alive without requiring a real vehicle.
+
+### ✨ Visual Demonstration Features
+- **Dynamic Headers**: Each core section (Privacy, Documentation, Terms) has unique, theme-aware gradient headers designed to "wow" the audience at first glance.
+- **Tech Stack Reveal**: On the Documentation page, grayscale icons colorize on hover to show professional attention to detail.
+- **3D Map Tilt**: The MapView component supports a 45° tilted view (activated via the 3D toggle) to show depth and realism in urban environments.
+- **Micro-Animations**: All interactions use subtle `scale-105` transitions and pulse effects (like the SOS button) to make the app feel responsive and "premium."
+
+---
+
 ## ▶️ Running the Full Stack
 
 ### 1. Start Backend
