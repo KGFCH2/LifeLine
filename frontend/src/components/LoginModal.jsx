@@ -4,9 +4,12 @@ import { useAuth } from '../context/AuthContext.jsx'
 import { auth, firebaseEnabled, googleProvider } from '../lib/firebase.js'
 import { X, Mail, User as UserIcon, ChevronRight, AlertCircle } from 'lucide-react'
 import { Link } from 'react-router-dom'
+import { useTheme } from '../context/ThemeContext.jsx'
 
 export default function LoginModal({ onClose }) {
   const { login } = useAuth()
+  const { theme } = useTheme()
+  const isDark = theme === 'dark'
   const [mode, setMode] = useState('form')
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
@@ -169,22 +172,22 @@ export default function LoginModal({ onClose }) {
   }
 
   return (
-    <div className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center bg-black/40 backdrop-blur-sm">
-      <div className="bg-white w-full sm:w-[400px] sm:rounded-3xl rounded-t-3xl p-6 shadow-2xl border border-gray-100">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+      <div className={`${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-gray-100'} w-full sm:w-[400px] rounded-[2rem] p-5 sm:p-8 shadow-2xl border transition-colors duration-300`}>
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h2 className="text-xl font-extrabold text-gray-900">Sign In</h2>
+            <h2 className={`text-xl font-extrabold ${isDark ? 'text-white' : 'text-gray-900'}`}>Sign In</h2>
             <p className="text-xs text-gray-400 mt-0.5">Access emergency features</p>
           </div>
-          <button onClick={onClose} className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center hover:bg-gray-200 transition-all">
-            <X size={16} className="text-gray-600" />
+          <button onClick={onClose} className={`w-8 h-8 rounded-full flex items-center justify-center transition-all ${isDark ? 'bg-slate-800 hover:bg-slate-700 text-slate-400' : 'bg-gray-100 hover:bg-gray-200 text-gray-600'}`}>
+            <X size={16} />
           </button>
         </div>
 
         {mode === 'google' ? (
           <div className="text-center py-8">
             <div className="w-12 h-12 border-4 border-red-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-            <p className="text-gray-600 dark:text-gray-300">Connecting to Google...</p>
+            <p className={isDark ? 'text-slate-300' : 'text-gray-600'}>Connecting to Google...</p>
           </div>
         ) : (
           <>
@@ -208,7 +211,9 @@ export default function LoginModal({ onClose }) {
 
             <button
               onClick={googleLogin}
-              className="w-full flex items-center justify-center gap-3 bg-white border border-gray-200 text-gray-700 py-3 rounded-xl font-medium hover:bg-gray-50 transition-all active:scale-95 mb-4"
+              className={`w-full flex items-center justify-center gap-3 py-3 rounded-xl font-medium transition-all active:scale-95 mb-4 border ${
+                isDark ? 'bg-slate-800 border-slate-700 text-white hover:bg-slate-700' : 'bg-white border-gray-200 text-gray-700 hover:bg-gray-50'
+              }`}
             >
               <svg className="w-5 h-5" viewBox="0 0 24 24">
                 <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
@@ -220,11 +225,11 @@ export default function LoginModal({ onClose }) {
             </button>
 
             <div className="flex items-center gap-3 my-4">
-              <div className="flex-1 h-px bg-gray-200 dark:bg-gray-700" />
+              <div className={`flex-1 h-px ${isDark ? 'bg-slate-800' : 'bg-gray-100'}`} />
               <span className="text-[10px] text-gray-400 uppercase">
                 or continue with email
               </span>
-              <div className="flex-1 h-px bg-gray-200 dark:bg-gray-700" />
+              <div className={`flex-1 h-px ${isDark ? 'bg-slate-800' : 'bg-gray-100'}`} />
             </div>
 
             <form onSubmit={submitForm} className="space-y-3">
@@ -234,8 +239,10 @@ export default function LoginModal({ onClose }) {
                   type="text"
                   placeholder="Full Name"
                   value={name}
-                  onChange={e => setName(e.target.value)}
-                  className="input-field pl-10"
+                  onChange={e => setName(e.target.value.replace(/[^a-zA-Z\s]/g, ''))}
+                  className={`w-full pl-10 pr-4 py-3 rounded-xl border outline-none transition-all ${
+                    isDark ? 'bg-slate-800 border-slate-700 text-white focus:border-[#C8102E]' : 'bg-gray-50 border-gray-100 focus:border-[#C8102E]'
+                  }`}
                   required
                 />
               </div>
@@ -250,14 +257,16 @@ export default function LoginModal({ onClose }) {
                     setError('')
                     setUserNotFound(false)
                   }}
-                  className="input-field pl-10"
+                  className={`w-full pl-10 pr-4 py-3 rounded-xl border outline-none transition-all ${
+                    isDark ? 'bg-slate-800 border-slate-700 text-white focus:border-[#C8102E]' : 'bg-gray-50 border-gray-100 focus:border-[#C8102E]'
+                  }`}
                   required
                 />
               </div>
               <button
                 type="submit"
                 disabled={loading}
-                className="btn-primary w-full"
+                className="w-full bg-[#C8102E] hover:bg-[#a50d26] text-white font-black py-3.5 rounded-xl transition-all active:scale-95 shadow-lg shadow-red-500/20 disabled:opacity-50"
               >
                 {loading ? 'Signing in...' : 'Continue as Guest'}
               </button>
@@ -265,7 +274,9 @@ export default function LoginModal({ onClose }) {
               <Link
                 to="/signup"
                 onClick={onClose}
-                className="w-full flex items-center justify-center gap-2 bg-primary-100 hover:bg-primary-200 dark:bg-primary-900/20 dark:hover:bg-primary-900/30 text-primary-700 dark:text-primary-300 font-medium py-2.5 px-4 rounded-xl transition-all active:scale-95"
+                className={`w-full flex items-center justify-center gap-2 font-medium py-3 px-4 rounded-xl transition-all active:scale-95 border ${
+                  isDark ? 'bg-slate-800 border-slate-700 text-slate-300 hover:bg-slate-700' : 'bg-gray-100 border-gray-100 text-gray-600 hover:bg-gray-200'
+                }`}
               >
                 Create Account
                 <ChevronRight size={18} />
