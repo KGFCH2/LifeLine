@@ -163,7 +163,7 @@ export const EmergencyProvider = ({ children }) => {
     nearestHospital, setNearestHospital,
     activeRoute, setActiveRoute,
     demoAmbulancePos, setDemoAmbulancePos,
-    demoPath, setDemoPath,
+    demoPath: demoPath.slice(stepCounter), setDemoPath,
     demoProgress, setDemoProgress,
     demoCountdown, setDemoCountdown,
     demoMode, setDemoMode,
