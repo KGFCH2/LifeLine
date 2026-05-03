@@ -1,5 +1,6 @@
-import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+// LifeLine+ Home Page - Production Build
+import { useState, useEffect } from 'react'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext.jsx'
 import { useTheme } from '../context/ThemeContext.jsx'
 import { useGeolocation } from '../hooks/useGeolocation.js'
@@ -9,7 +10,7 @@ import {
   Ambulance, Shield, Stethoscope, MapPin, Clock,
   Phone, Mail, Send, CheckCircle, ChevronRight, Zap,
   Navigation, Brain, Heart, ArrowRight, Star, Activity,
-  Calendar, Building2
+  Calendar, Building2, Flame, AlertTriangle
 } from 'lucide-react'
 
 const TOP_DOCTORS = [
@@ -21,19 +22,33 @@ const TOP_DOCTORS = [
 
 export default function Home() {
   const navigate = useNavigate()
+  const location = useLocation()
   const { user } = useAuth()
   const { theme } = useTheme()
   const isDark = theme === 'dark'
-  const { location } = useGeolocation()
+  const { location: geoLoc } = useGeolocation()
   const [showLogin, setShowLogin] = useState(false)
   const [form, setForm] = useState({ name: '', email: '', message: '' })
   const [sent, setSent] = useState(false)
   const [contactLoading, setContactLoading] = useState(false)
   const [contactError, setContactError] = useState('')
 
+  useEffect(() => {
+    if (location.state?.showLogin) {
+      setShowLogin(true)
+      // Clear state after reading it
+      window.history.replaceState({}, document.title)
+    }
+  }, [location])
+
   const handleEmergency = () => {
     if (!user) setShowLogin(true)
     else navigate('/emergency')
+  }
+
+  const handleDoctors = () => {
+    if (!user) setShowLogin(true)
+    else navigate('/doctors')
   }
 
   const handleContactSubmit = async (e) => {
@@ -70,7 +85,7 @@ export default function Home() {
 
   return (
     <div className={`min-h-screen transition-colors duration-300 ${isDark ? 'bg-[#0f172a]' : 'bg-white'}`}>
-      <HeroSlider onEmergency={handleEmergency} />
+      <HeroSlider onEmergency={handleEmergency} onDoctors={handleDoctors} />
 
       {/* ─── QUICK STATS ─────────────────────────────────────────────────── */}
       <section className={`py-12 border-b ${isDark ? 'bg-slate-950/50 border-slate-800' : 'bg-gray-50 border-gray-100'}`}>
@@ -81,8 +96,8 @@ export default function Home() {
             { label: 'Partner Hospitals', value: '450+', icon: Building2, color: 'text-emerald-500' },
             { label: 'Lives Saved', value: '85k+', icon: Activity, color: 'text-[#C8102E]' },
           ].map((stat) => (
-            <div key={stat.label} className="flex items-center gap-4">
-              <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${isDark ? 'bg-slate-900 shadow-xl' : 'bg-white shadow-sm'}`}>
+            <div key={stat.label} className="flex items-center gap-4 group">
+              <div className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-transform group-hover:scale-105 ${isDark ? 'bg-slate-900 shadow-xl' : 'bg-white shadow-sm'}`}>
                 <stat.icon size={22} className={stat.color} />
               </div>
               <div>
@@ -139,7 +154,7 @@ export default function Home() {
                   isDark ? 'bg-slate-900 border-slate-800 hover:border-[#C8102E]/40' : 'bg-white border-gray-100 shadow-xl shadow-gray-200/40'
                 }`}
               >
-                <div className={`w-14 h-14 rounded-2xl ${s.color} flex items-center justify-center text-white shadow-2xl shadow-inherit mb-8 group-hover:scale-110 transition-transform`}>
+                <div className={`w-14 h-14 rounded-2xl ${s.color} flex items-center justify-center text-white shadow-2xl shadow-inherit mb-8 group-hover:scale-105 transition-transform`}>
                   <s.icon size={28} />
                 </div>
                 <h3 className={`text-2xl font-black mb-4 ${isDark ? 'text-white' : 'text-gray-900'}`}>{s.title}</h3>
@@ -169,7 +184,7 @@ export default function Home() {
                     {doc.initial}
                   </div>
                   <div>
-                    <h4 className={`font-black text-base truncate ${isDark ? 'text-white' : 'text-gray-900'}`}>{doc.name}</h4>
+                    <h4 className={`font-black text-base leading-tight ${isDark ? 'text-white' : 'text-gray-900'}`}>{doc.name}</h4>
                     <p className="text-[11px] font-bold text-[#C8102E] uppercase tracking-wider">{doc.specialty}</p>
                   </div>
                 </div>
@@ -184,7 +199,7 @@ export default function Home() {
                   </div>
                 </div>
                 <button 
-                  onClick={() => navigate('/doctors')}
+                  onClick={handleDoctors}
                   className={`w-full py-3.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${
                     isDark ? 'bg-slate-800 text-white hover:bg-slate-700' : 'bg-gray-50 text-gray-900 hover:bg-[#C8102E] hover:text-white'
                   }`}
@@ -214,7 +229,7 @@ export default function Home() {
           
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-6">
             {[
-              { name: 'Babin Bid', role: 'Team Lead & Full Stack Developer', initials: 'BB', portfolio: null },
+              { name: 'Babin Bid', role: 'Team Lead & Full Stack Developer', initials: 'BB', portfolio: 'https://babin-portfolio.vercel.app/' },
               { name: 'Atanu Saha', role: 'Frontend Developer & Tester', initials: 'AS', portfolio: null },
               { name: 'Rohit Kumar Adak', role: 'Idea, Architect & Backend Dev', initials: 'RK', portfolio: 'https://rohitadak.dev'},
               { name: 'Sagnik Bachhar', role: 'Researcher', initials: 'SB', portfolio: null },
@@ -223,16 +238,16 @@ export default function Home() {
                 isDark ? 'bg-slate-900 border-slate-800 hover:border-[#C8102E]/30 shadow-xl' : 'bg-white border-gray-100 hover:border-[#C8102E]/20 hover:shadow-lg'
               }`}>
                 {m.portfolio ? (
-                  <a href={m.portfolio} target="_blank" rel="noopener noreferrer" className="w-16 h-16 rounded-2xl bg-[#C8102E] flex items-center justify-center text-white font-black text-xl mb-4 shadow-xl shadow-[#C8102E]/20 group-hover:scale-110 transition-transform">
+                  <a href={m.portfolio} target="_blank" rel="noopener noreferrer" className="w-16 h-16 rounded-2xl bg-[#C8102E] flex items-center justify-center text-white font-black text-xl mb-4 shadow-xl shadow-[#C8102E]/20 group-hover:scale-105 transition-transform">
                     {m.initials}
                   </a>
                 ) : (
-                  <div className="w-16 h-16 rounded-2xl bg-[#C8102E] flex items-center justify-center text-white font-black text-xl mb-4 shadow-xl shadow-[#C8102E]/20 group-hover:scale-110 transition-transform">
+                  <div className="w-16 h-16 rounded-2xl bg-[#C8102E] flex items-center justify-center text-white font-black text-xl mb-4 shadow-xl shadow-[#C8102E]/20 group-hover:scale-105 transition-transform">
                     {m.initials}
                   </div>
                 )}
                 <p className={`text-base font-bold leading-tight ${isDark ? 'text-white' : 'text-gray-900'}`}>{m.name}</p>
-                <p className="text-xs text-gray-400 mt-2 font-medium leading-tight">{m.role}</p>
+                <p className="text-xs text-gray-400 mt-2 font-medium leading-tight group-hover:text-[#C8102E] transition-colors">{m.role}</p>
               </div>
             ))}
           </div>
@@ -260,10 +275,10 @@ export default function Home() {
               ].map((c) => {
                 const Icon = c.icon
                 const inner = (
-                  <div className={`flex items-center gap-5 p-5 rounded-[1.5rem] border transition-all ${
+                  <div className={`flex items-center gap-5 p-5 rounded-[1.5rem] border transition-all group ${
                     isDark ? 'bg-slate-900 border-slate-800 hover:border-slate-700' : 'bg-gray-50 border-gray-100 hover:shadow-md'
                   }`}>
-                    <div className={`w-12 h-12 ${isDark ? c.darkBg : c.bg} rounded-2xl flex items-center justify-center shrink-0`}>
+                    <div className={`w-12 h-12 ${isDark ? c.darkBg : c.bg} rounded-2xl flex items-center justify-center shrink-0 transition-transform group-hover:scale-105`}>
                       <Icon size={20} className={c.color} />
                     </div>
                     <div>
@@ -299,6 +314,42 @@ export default function Home() {
                 </form>
               )}
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ─── NATIONAL HELPLINES ─────────────────────────────────────────── */}
+      <section className={`py-16 px-4 border-t ${isDark ? 'bg-slate-950/30 border-slate-800' : 'bg-red-50/30 border-red-100'}`}>
+        <div className="max-w-7xl mx-auto flex flex-col items-center text-center">
+          <div className="mb-10">
+            <h2 className={`text-3xl font-black mb-3 ${isDark ? 'text-white' : 'text-gray-900'}`}>National Emergency Helplines</h2>
+            <p className="text-sm font-bold text-gray-400 uppercase tracking-widest max-w-lg mx-auto">Available 24/7 across India for immediate assistance</p>
+          </div>
+          
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 w-full">
+            {[
+              { label: 'Ambulance', number: '108', color: 'text-red-600', icon: Ambulance, bg: 'bg-red-500/10' },
+              { label: 'Police', number: '100', color: 'text-blue-600', icon: Shield, bg: 'bg-blue-500/10' },
+              { label: 'Fire', number: '101', color: 'text-orange-600', icon: Flame, bg: 'bg-orange-500/10' },
+              { label: 'Emergency', number: '112', color: 'text-[#C8102E]', icon: AlertTriangle, bg: 'bg-red-600/10' },
+            ].map((h) => {
+              const Icon = h.icon;
+              return (
+                <a 
+                  key={h.label} 
+                  href={`tel:${h.number}`} 
+                  className={`flex flex-col items-center justify-center p-6 rounded-[2rem] border transition-all hover:scale-105 active:scale-95 group ${
+                    isDark ? 'bg-slate-900 border-slate-800 hover:border-slate-700 shadow-xl' : 'bg-white border-gray-100 shadow-md hover:shadow-lg'
+                  }`}
+                >
+                  <div className={`w-12 h-12 ${h.bg} rounded-2xl flex items-center justify-center mb-4 transition-transform group-hover:scale-105`}>
+                    <Icon size={24} className={h.color} />
+                  </div>
+                  <span className={`text-2xl font-black ${h.color}`}>{h.number}</span>
+                  <span className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em] mt-1">{h.label}</span>
+                </a>
+              )
+            })}
           </div>
         </div>
       </section>
